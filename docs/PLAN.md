@@ -1,7 +1,7 @@
 # Delivery plan
 
-Two tracks run in parallel. Geometry compatibility is shared; neither track
-requires expanding the macOS feature set first.
+Three tracks share geometry compatibility. Windows targets the complete macOS
+alpha.2 feature set without requiring further macOS features first.
 
 ## A. Validate and polish macOS
 
@@ -45,6 +45,20 @@ Keep personal photo data out of Git.
 exports correctly through its own renderer without depending on the macOS app.
 A maintainer can reproduce the integration from the documentation.
 
+## C. Deliver Windows feature parity
+
+1. Run the unchanged 20-case corpus and boundary checks through portable .NET.
+2. Verify WIC output for orientation, precision, color, metadata and original/output
+   protection, using synthetic shared fixtures and representative real photos.
+3. Exercise the native WinUI workflow, cancellation/retry, keyboard, Narrator,
+   drag/drop, high contrast and display scaling.
+4. Test a complete self-contained build on an independent Windows PC before
+   publishing a Windows alpha. Keep unverified gates visible in
+   [Windows parity](WINDOWS_PARITY.md).
+
+**Done:** the full macOS feature checklist has Windows evidence and a reproducible
+installable artifact; a successful compile alone does not establish parity.
+
 ## Current baseline and gates
 
 Source includes the macOS workflow, Apple renderer, developer CLI, Python
@@ -58,8 +72,7 @@ or audit claims are not substitutes for validating changed source.
 
 ## Longer term
 
-After the two tracks, prioritize from actual usage: additional border colors,
-watched folders, Finder actions and richer CLI workflows. Evaluate Windows, iOS
-and web independently. Share geometry/conformance across all implementations;
+After these tracks, prioritize from actual usage: additional border colors,
+watched folders, Finder actions and richer CLI workflows. Evaluate iOS and web independently. Share geometry/conformance across all implementations;
 share rendering only where platform requirements justify it. Package API stability
 and reliable distribution matter before broad platform promises.

@@ -19,8 +19,10 @@ public sealed class ColorTests
         frame.Freeze();
         return frame;
     }
-    private static byte[] Profile(BitmapFrame image)
+    private static byte[]? Profile(BitmapFrame image)
     {
+        if (image.ColorContexts is null || image.ColorContexts.Count == 0)
+            return null;
         using var input = image.ColorContexts[0].OpenProfileStream();
         using var output = new MemoryStream();
         input.CopyTo(output);
@@ -64,21 +66,31 @@ public sealed class ColorTests
         }
         return false;
     }
-    [Fact]
-    public void SharedSrgbP3DepthAndOpaqueXmpRoundTrips()
+    [Theory]
+    [InlineData("sRGB-8.jpg")]
+    [InlineData("sRGB-8.png")]
+    [InlineData("sRGB-16.png")]
+    [InlineData("sRGB-8.tiff")]
+    [InlineData("sRGB-16.tiff")]
+    [InlineData("P3-8.jpg")]
+    [InlineData("P3-8.png")]
+    [InlineData("P3-16.png")]
+    [InlineData("P3-8.tiff")]
+    [InlineData("P3-16.tiff")]
+    public void SharedSrgbP3DepthAndOpaqueXmpRoundTrips(string filename)
     {
         string inputFolder = Environment.GetEnvironmentVariable("BORDERMUSE_COLOR_FIXTURES") ?? throw new InvalidOperationException("Set BORDERMUSE_COLOR_FIXTURES to the generated shared codec corpus.");
         string outputFolder = Path.Combine(Path.GetTempPath(), "bordermuse-color-" + Guid.NewGuid());
         Directory.CreateDirectory(outputFolder);
         try
         {
-            var inputs = Directory.GetFiles(inputFolder);
-            Assert.Equal(10, inputs.Length);
+            Assert.Equal(10, Directory.GetFiles(inputFolder).Length);
             var processor = new ImageProcessor();
-            foreach (string input in inputs)
+            string input = Path.Combine(inputFolder, filename);
             {
                 var info = processor.Inspect(input);
                 var before = Read(input);
+                if (filename.StartsWith("P3")) Assert.NotNull(Profile(before));
                 Assert.True(HasMarker(input), "Source XMP missing: " + input);
                 foreach (bool keep in new[] { true, false })
                 {

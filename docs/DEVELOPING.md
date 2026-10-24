@@ -46,6 +46,13 @@ dotnet publish apps/windows/BorderMuse.Windows.csproj -c Release -p:Platform=x64
 dotnet run --project apps/cli-dotnet/bordermuse.csproj -- --help
 ```
 
+CI also generates synthetic sRGB/P3 and custom-XMP inputs on macOS, then runs
+`tests/windows-color` against them on Windows. Generate these locally with
+`swift scripts/windows/make-color-fixtures.swift build/qa/shared-color` and set
+`BORDERMUSE_COLOR_FIXTURES` to that folder for the color tests. The opt-in
+`scripts/windows/test-ui.ps1` harness uses an isolated preset store and captures
+the actual workspace in light/dark mode; it does not exercise assistive technology.
+
 The Windows App SDK and .NET runtime are included in the self-contained app.
 Run `BorderMuse.exe` from the complete published folder. Development ZIPs are
 unsigned and are not Windows releases. The Windows CI workflow runs native codec
@@ -72,7 +79,8 @@ Manual and independent installation checks are tracked in [the plan](PLAN.md).
 
 ## App and artwork conventions
 
-App-owned strings live in `en-US.lproj/Localizable.strings`. Presets use the
+macOS strings live in `en-US.lproj/Localizable.strings`; Windows strings live in
+`packages/core-dotnet/Resources/en-US.json`. Both use US English. Presets use the
 app's Application Support directory under `BorderMuse/presets-v1.json`.
 Use native macOS controls and system typography; UI colors are defined in
 `apps/macos/BorderMuse/Workspace/WorkspaceStyle.swift`. Keep preview appearance

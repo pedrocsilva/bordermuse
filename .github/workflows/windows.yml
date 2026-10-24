@@ -23,7 +23,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet test tests/dotnet/BorderMuse.Tests.csproj -c Release
-  windows:
+  native-codecs:
     needs: codec-fixtures
     runs-on: windows-latest
     timeout-minutes: 30
@@ -44,6 +44,14 @@ jobs:
         env:
           BORDERMUSE_COLOR_FIXTURES: ${{ github.workspace }}/build/qa/shared-color
         run: dotnet test tests/windows-color/BorderMuse.Color.Tests.csproj -c Release
+  windows-app:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
       - name: Verify Windows CLI
         run: dotnet run --project apps/cli-dotnet/bordermuse.csproj -c Release -- --help
       - name: Publish self-contained Windows app
