@@ -79,7 +79,11 @@ Manual and independent installation checks are tracked in [the plan](PLAN.md).
 
 ## App and artwork conventions
 
-Edit app text in the shared `resources/strings/en-US.json` catalog, then run:
+Edit app text only in the shared `resources/strings/en-US.json` catalog. Commit and
+push that change: CI generates both native resource files before macOS/Windows
+tests and builds, including macOS prerelease packaging.
+
+For local builds, regenerate the resources with:
 
 ```bash
 python3 scripts/localization/generate.py
@@ -88,8 +92,9 @@ python3 scripts/localization/generate.py --check
 ```
 
 The generator writes macOS `Localizable.strings` and the embedded Windows JSON.
-Both outputs are checked in for native builds; CI rejects stale or hand-edited
-outputs. Installed apps need no generator or Python. Plain messages are strings;
+Both outputs are checked in for native tooling; CI always regenerates them from
+the catalog in its build workspace. Local builds should regenerate after catalog
+edits. Installed apps need no generator or Python. Plain messages are strings;
 formatted entries declare ordered, named `integer`/`string` arguments and use
 `{name}` placeholders. The generator supplies Swift positional format specifiers
 and .NET numeric formatting. Entries may declare platform `overrides` (Finder

@@ -53,6 +53,8 @@ jobs:
         with:
           ref: ${{ needs.plan.outputs.commit }}
           persist-credentials: false
+      - name: Generate app localization resources
+        run: python3 scripts/localization/generate.py
       - name: Build universal app, ZIP, DMG, checksums and manifest
         run: bash scripts/macos/package-release.sh "$RELEASE_VERSION" universal
       - name: Verify packaged app and release files
