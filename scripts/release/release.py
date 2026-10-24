@@ -97,6 +97,10 @@ the source commit, architectures and geometry contract.
 Read [installation instructions](https://github.com/pedrocsilva/bordermuse/blob/main/docs/INSTALL.md).
 Metadata may include location. Check the delivery plan for remaining validation.
 
+Manual VoiceOver, drag/drop, complete keyboard navigation and live minimum-window/
+appearance checks remain pending. Independent downloaded-app installation checks
+on Intel and macOS 14 are also pending. This alpha is intended for early testing.
+
 See [CHANGELOG.md](https://github.com/pedrocsilva/bordermuse/blob/v{version}/CHANGELOG.md)
 for changes and [release documentation](https://github.com/pedrocsilva/bordermuse/blob/main/docs/RELEASE.md)
 for validation and signing limits.
