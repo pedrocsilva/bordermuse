@@ -90,7 +90,8 @@ public sealed class ColorTests
             {
                 var info = processor.Inspect(input);
                 var before = Read(input);
-                if (filename.StartsWith("P3")) Assert.NotNull(Profile(before));
+                if (filename.StartsWith("P3"))
+                    Assert.NotNull(Profile(before));
                 Assert.True(HasMarker(input), "Source XMP missing: " + input);
                 foreach (bool keep in new[] { true, false })
                 {

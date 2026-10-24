@@ -21,15 +21,15 @@ public sealed class ImageTests : IDisposable
         int stride = 100 * 3 * (bits / 8);
         byte[] pixels = new byte[stride * 80];
         for (int y = 0; y < 80; y++)
-        for (int x = 0; x < 100; x++)
-        for (int c = 0; c < 3; c++)
-        {
-            int index = y * stride + x * 3 * (bits / 8) + c * (bits / 8);
-            byte value = (byte)(c == 0 ? (x < 50 ? 210 : 30) : c == 1 ? (y < 40 ? 150 : 20) : 80);
-            pixels[index] = value;
-            if (bits == 16)
-                pixels[index + 1] = value;
-        }
+            for (int x = 0; x < 100; x++)
+                for (int c = 0; c < 3; c++)
+                {
+                    int index = y * stride + x * 3 * (bits / 8) + c * (bits / 8);
+                    byte value = (byte)(c == 0 ? (x < 50 ? 210 : 30) : c == 1 ? (y < 40 ? 150 : 20) : 80);
+                    pixels[index] = value;
+                    if (bits == 16)
+                        pixels[index + 1] = value;
+                }
         var bitmap = BitmapSource.Create(100, 80, 96, 96, pixelFormat, null, pixels, stride);
         bitmap.Freeze();
         BitmapEncoder encoder = format switch

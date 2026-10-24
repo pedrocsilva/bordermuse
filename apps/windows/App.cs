@@ -16,7 +16,8 @@ internal static class Program
         Application.Start(parameters =>
         {
             SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
-            _ = new App();
+            try { _ = new App(); }
+            catch (Exception error) { App.RecordSmokeFailure(error.ToString()); throw; }
         });
     }
 }
@@ -25,7 +26,18 @@ public sealed class App : Application
 {
     private MainWindow? window;
     private AppInstance? instance;
-    public App() => Resources.MergedDictionaries.Add(new XamlControlsResources());
+    internal static void RecordSmokeFailure(string message)
+    {
+        if (Environment.GetEnvironmentVariable("BORDERMUSE_SMOKE_DIR") is not { } directory)
+            return;
+        Directory.CreateDirectory(directory);
+        File.AppendAllText(Path.Combine(directory, "failure.txt"), message + Environment.NewLine);
+    }
+    public App()
+    {
+        UnhandledException += (_, error) => RecordSmokeFailure(error.Message + Environment.NewLine + error.Exception);
+        Resources.MergedDictionaries.Add(new XamlControlsResources());
+    }
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         instance = AppInstance.FindOrRegisterForKey("BorderMuse.Windows");
@@ -48,11 +60,14 @@ public sealed class App : Application
         await window.ImportAsync(Environment.GetCommandLineArgs().Skip(1).Where(File.Exists));
         if (Environment.GetEnvironmentVariable("BORDERMUSE_SMOKE_DIR") is { } smoke)
         {
-            try { await window.SmokeAsync(smoke); }
+            try
+            {
+                await window.SmokeAsync(smoke);
+            }
             catch (Exception error)
             {
                 Directory.CreateDirectory(smoke);
-                File.WriteAllText(Path.Combine(smoke,"failure.txt"),error.ToString());
+                File.WriteAllText(Path.Combine(smoke, "failure.txt"), error.ToString());
                 Environment.Exit(1);
             }
         }

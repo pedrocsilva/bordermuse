@@ -97,8 +97,8 @@ public sealed class PhotoSession(IImageProcessor processor, PresetStore store)
     public async Task ImportAsync(IEnumerable<string> paths)
     {
         lock (pending)
-        foreach (var path in paths)
-            pending.Enqueue(path);
+            foreach (var path in paths)
+                pending.Enqueue(path);
         if (IsExporting)
             return;
         await importGate.WaitAsync();
