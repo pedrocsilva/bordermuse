@@ -66,6 +66,17 @@ public sealed class ColorTests
         }
         return false;
     }
+    private static byte[]? PngExif(string path)
+    {
+        byte[] data = File.ReadAllBytes(path);
+        for (int i = 8; i + 12 <= data.Length;)
+        {
+            int count = checked((int)BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(i, 4)));
+            if (Encoding.ASCII.GetString(data, i + 4, 4) == "eXIf") return data.AsSpan(i + 8, count).ToArray();
+            i = checked(i + 12 + count);
+        }
+        return null;
+    }
     [Theory]
     [InlineData("sRGB-8.jpg")]
     [InlineData("sRGB-8.png")]
@@ -103,6 +114,11 @@ public sealed class ColorTests
                     Assert.Equal(info.BitsPerComponent, processor.Inspect(output).BitsPerComponent);
                     Assert.Equal(Profile(before), Profile(after));
                     Assert.Equal(keep, HasMarker(output));
+                    if (filename.EndsWith(".png"))
+                    {
+                        Assert.NotNull(PngExif(input));
+                        Assert.Equal(keep, PngExif(output) is not null);
+                    }
                     byte[] a = Pixel(before, 50, 33), b = Pixel(after, 53, 42);
                     for (int c = 0; c < 3; c++)
                         Assert.InRange(Math.Abs(BinaryPrimitives.ReadUInt16LittleEndian(a.AsSpan(c * 2, 2)) - BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(c * 2, 2))), 0, info.BitsPerComponent == 16 ? 2 : 514);

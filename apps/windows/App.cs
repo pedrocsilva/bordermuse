@@ -36,11 +36,11 @@ public sealed class App : Application
     public App()
     {
         UnhandledException += (_, error) => RecordSmokeFailure(error.Message + Environment.NewLine + error.Exception);
-        Resources = new ResourceDictionary();
-        Resources.MergedDictionaries.Add(new XamlControlsResources());
     }
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+        Resources = new ResourceDictionary();
+        Resources.MergedDictionaries.Add(new XamlControlsResources());
         instance = AppInstance.FindOrRegisterForKey("BorderMuse.Windows");
         if (!instance.IsCurrent)
         {
