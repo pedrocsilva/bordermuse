@@ -62,21 +62,22 @@ public sealed partial class MainWindow
             throw new InvalidOperationException("Export overwrite/original protection failed.");
         var sourceSize = session.Photos[0].Info.Size;
         photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == 2048);
-        await Task.Delay(50);
+        await WaitFor(() => session.Settings.ReduceSize && session.Settings.LongEdge == 2048, "2048 photo size");
         if (!session.Settings.ReduceSize || session.Settings.LongEdge != 2048 || session.Settings.PreparedSize(sourceSize) != sourceSize)
             throw new InvalidOperationException("The 2048 preset must retain smaller photos without enlargement.");
         photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == -1);
+        await WaitFor(() => longEdgeRow.Visibility == Visibility.Visible, "custom size editor");
         longEdge.Text = "51";
-        await Task.Delay(50);
+        await WaitFor(() => session.Settings.LongEdge == 51 && session.InputsValid, "custom size application");
         if (session.Settings.PreparedSize(sourceSize) != new BorderMuse.Geometry.PixelSize(51, 34))
             throw new InvalidOperationException("Custom photo resizing did not prepare the expected dimensions.");
         session.SavePreset("Resized QA");
         var resizedPreset = session.SelectedPreset;
         longEdge.Text = "abc";
-        await Task.Delay(50);
+        await WaitFor(() => !session.InputsValid, "invalid custom size rejection");
         if (session.CanExport) throw new InvalidOperationException("Invalid custom size did not block export.");
         photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == 0);
-        await Task.Delay(50);
+        await WaitFor(() => !session.Settings.ReduceSize && session.InputsValid, "original size restoration");
         if (!session.CanExport || session.Settings.ReduceSize) throw new InvalidOperationException("Original size did not clear the hidden invalid draft.");
         session.UsePreset(resizedPreset);
         SyncSettings();
@@ -140,6 +141,11 @@ public sealed partial class MainWindow
         }));
         allowClose = true;
         Close();
+    }
+    private static async Task WaitFor(Func<bool> ready, string description)
+    {
+        for (int attempt = 0; !ready() && attempt < 200; attempt++) await Task.Delay(25);
+        if (!ready()) throw new InvalidOperationException("Timed out waiting for " + description + ".");
     }
     private async Task Capture(string path)
     {
