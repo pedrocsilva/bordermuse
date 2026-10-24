@@ -60,6 +60,12 @@ public sealed partial class MainWindow
         await session.ExportAsync(exports);
         if (!File.Exists(Path.Combine(exports, "synthetic-border-2.png")) || !File.ReadAllBytes(first).SequenceEqual(firstBytes) || !File.ReadAllBytes(input).SequenceEqual(original))
             throw new InvalidOperationException("Export overwrite/original protection failed.");
+        options.IsExpanded = true;
+        await Task.Delay(300);
+        await Capture(Path.Combine(directory, "light-expanded-options.png"));
+        var optionBounds = formatExplanation.TransformToVisual(inspectorScroll).TransformBounds(new global::Windows.Foundation.Rect(0, 0, formatExplanation.ActualWidth, formatExplanation.ActualHeight));
+        if (optionBounds.Bottom > inspectorScroll.ViewportHeight + 1)
+            throw new InvalidOperationException("Expanded export settings do not fit at the normal window size.");
         root.RequestedTheme = ElementTheme.Dark;
         AppWindow.Resize(new global::Windows.Graphics.SizeInt32(980, 680));
         options.IsExpanded = true;

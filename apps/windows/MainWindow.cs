@@ -45,7 +45,8 @@ public sealed partial class MainWindow : Window
     private readonly CheckBox reduce = new() { Content = Strings.Text("reduceSize") }, metadata = new() { Content = Strings.Text("metadata") };
     private readonly ProgressBar progress = new() { Minimum = 0, Maximum = 1 };
     private readonly TextBlock progressLabel = Text("", 12), sizeSummary = Text("", 12), metadataSummary = Text("", 12);
-    private readonly StackPanel progressPanel = new() { Spacing = 8 }, inspectorFields = new() { Spacing = 16 };
+    private readonly StackPanel progressPanel = new() { Spacing = 8 }, inspectorFields = new() { Spacing = 14 };
+    private readonly TextBlock resizeHelp = Text(Strings.Text("sizeHelp"), 12), formatExplanation = Text(Strings.Text("formatHelp"), 12);
     private readonly ScrollViewer inspectorScroll = new() { HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     private readonly Grid longEdgeRow = new();
     private readonly Expander options = new() { Header = Strings.Text("exportOptions"), HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
@@ -78,6 +79,12 @@ public sealed partial class MainWindow : Window
         Grid.SetColumn(right, 1);
         grid.Children.Add(right);
         return grid;
+    }
+    private static StackPanel Group(params UIElement[] children)
+    {
+        var group = new StackPanel { Spacing = 6 };
+        foreach (var child in children) group.Children.Add(child);
+        return group;
     }
     private static Border Divider() => new() { Height = 1, Background = new SolidColorBrush(Colors.Gray), Opacity = .25, Margin = new Thickness(0, 4, 0, 4) };
     public MainWindow()
@@ -271,10 +278,11 @@ public sealed partial class MainWindow : Window
         });
         inspectorScroll.Content = inspectorFields;
         inspector.Children.Add(inspectorScroll);
-        inspectorFields.Children.Add(Text(Strings.Text("borderSettings"), 16));
-        inspectorFields.Children.Add(scope);
+        var heading = Group(Text(Strings.Text("borderSettings"), 16), scope);
+        heading.Spacing = 4;
+        inspectorFields.Children.Add(heading);
         save.Click += async (_, _) => await SavePreset();
-        inspectorFields.Children.Add(Row(Text(Strings.Text("preset"), 14), save));
+        var presetHeading = Row(Text(Strings.Text("preset"), 14), save);
         Id(save, "savePreset");
         var more = new Button() { Content = new SymbolIcon(Symbol.More) };
         Id(more, "presetActions", Strings.Text("presetActions"));
@@ -282,25 +290,23 @@ public sealed partial class MainWindow : Window
         presetMenu.Items.Add(deletePreset);
         more.Flyout = presetMenu;
         deletePreset.Click += async (_, _) => { try { session.DeletePreset(); } catch { await Dialog(Strings.Text("issuesTitle"), Text(Strings.Text("presetError"), 14), "done"); } };
-        inspectorFields.Children.Add(Row(presets, more));
+        inspectorFields.Children.Add(Group(presetHeading, Row(presets, more)));
         presets.SelectionChanged += (_, _) => { if (!updating && presets.SelectedItem is PresetChoice choice) { session.UsePreset(choice.Id); SyncSettings(); } };
         Id(presets, "presetPicker", Strings.Text("preset"));
         ratios.ItemsSource = new[] { "original", "1:1", "5:4", "4:5", "3:2", "2:3", "16:9", "9:16", "2:1", "1:2" }.Select(r => new RatioChoice(r, r == "original" ? Strings.Text("original") : r)).ToArray();
         ratios.DisplayMemberPath = nameof(RatioChoice.Name);
-        inspectorFields.Children.Add(Text(Strings.Text("ratio"), 14));
-        inspectorFields.Children.Add(ratios);
+        inspectorFields.Children.Add(Group(Text(Strings.Text("ratio"), 14), ratios));
         ratios.SelectionChanged += (_, _) => ApplySettings();
         Id(ratios, "ratioPicker", Strings.Text("ratio"));
-        inspectorFields.Children.Add(Row(Text(Strings.Text("thickness"), 14), thickness));
-        inspectorFields.Children.Add(slider);
+        slider.Height = slider.MinHeight = 32;
+        inspectorFields.Children.Add(Group(Row(Text(Strings.Text("thickness"), 14), thickness), slider));
         Id(thickness, "thicknessField", Strings.Text("thickness"));
         Id(slider, "thicknessSlider", Strings.Text("thickness"));
         AutomationProperties.SetHelpText(thickness, Strings.Text("thicknessError"));
         thickness.TextChanged += (_, _) => ApplySettings();
         slider.ValueChanged += (_, e) => { if (!updating) thickness.Text = ((int)Math.Round(e.NewValue)).ToString(Strings.Culture); };
-        inspectorFields.Children.Add(Divider());
         Id(validation, "settingsError");
-        var settings = new StackPanel() { Spacing = 14 };
+        var settings = new StackPanel() { Spacing = 8 };
         settings.Children.Add(reduce);
         longEdgeRow.ColumnDefinitions.Add(new()
         {
@@ -314,11 +320,11 @@ public sealed partial class MainWindow : Window
         Grid.SetColumn(longEdge, 1);
         longEdgeRow.Children.Add(longEdge);
         settings.Children.Add(longEdgeRow);
-        settings.Children.Add(Text(Strings.Text("sizeHelp"), 12));
+        settings.Children.Add(resizeHelp);
         settings.Children.Add(Row(Text(Strings.Text("quality"), 14), quality));
         settings.Children.Add(metadata);
         settings.Children.Add(Text(Strings.Text("metadataHelp"), 12));
-        settings.Children.Add(Text(Strings.Text("formatHelp"), 12));
+        settings.Children.Add(formatExplanation);
         options.Content = settings;
         inspectorFields.Children.Add(options);
         reduce.Checked += (_, _) => ApplySettings();
@@ -331,11 +337,10 @@ public sealed partial class MainWindow : Window
         Id(quality, "qualityField", Strings.Text("quality"));
         AutomationProperties.SetHelpText(longEdge, Strings.Text("longEdgeError"));
         AutomationProperties.SetHelpText(quality, Strings.Text("qualityError"));
-        var footer = new StackPanel() { Spacing = 12, Padding = new Thickness(0, 16, 0, 0) };
+        var footer = new StackPanel() { Spacing = 8, Padding = new Thickness(0, 12, 0, 0) };
         footer.Children.Add(validation);
-        footer.Children.Add(Row(Text(Strings.Text("summarySize"), 12), sizeSummary));
-        footer.Children.Add(Row(Text(Strings.Text("summaryFormat"), 12), Text(Strings.Text("sourceFormat"), 12)));
-        footer.Children.Add(Row(Text(Strings.Text("summaryMetadata"), 12), metadataSummary));
+        footer.Children.Add(Row(sizeSummary, metadataSummary));
+        ToolTipService.SetToolTip(sizeSummary, Strings.Text("formatHelp"));
         footer.Children.Add(Divider());
         progressPanel.Children.Add(progress);
         progressPanel.Children.Add(Row(progressLabel, cancel));
@@ -382,7 +387,7 @@ public sealed partial class MainWindow : Window
             slider.Value = t;
             updating = false;
         }
-        longEdgeRow.Visibility = reduce.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        longEdgeRow.Visibility = resizeHelp.Visibility = reduce.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         session.NotifySettingsChanged();
     }
     private void SyncSettings()
@@ -396,7 +401,7 @@ public sealed partial class MainWindow : Window
         reduce.IsChecked = s.ReduceSize;
         metadata.IsChecked = s.KeepMetadata;
         ratios.SelectedItem = ratios.Items.Cast<RatioChoice>().First(r => r.Value == s.Ratio);
-        longEdgeRow.Visibility = s.ReduceSize ? Visibility.Visible : Visibility.Collapsed;
+        longEdgeRow.Visibility = resizeHelp.Visibility = s.ReduceSize ? Visibility.Visible : Visibility.Collapsed;
         options.IsExpanded = s.ReduceSize;
         validation.Text = "";
         validation.Visibility = Visibility.Collapsed;
@@ -462,7 +467,7 @@ public sealed partial class MainWindow : Window
         progress.Value = (double)Math.Max(0, session.Progress.Completed - 1) / Math.Max(1, session.Progress.Total);
         progressLabel.Text = Strings.Format("exporting", session.Progress.Completed, session.Progress.Total);
         sizeSummary.Text = session.Settings.ReduceSize ? Strings.Format("sizeLimit", session.Settings.LongEdge) : Strings.Text("originalResolution");
-        metadataSummary.Text = Strings.Text(session.Settings.KeepMetadata ? "metadataKept" : "metadataRemoved");
+        metadataSummary.Text = Strings.Text(session.Settings.KeepMetadata ? "metadataKeptSummary" : "metadataRemovedSummary");
         status.Text = session.IsImporting ? Strings.Text("loading") : session.Result is { } result ? Strings.Format(result.Canceled ? "cancelled" : "complete", result.Outputs.Count) : session.Selected is { } selectedPhoto ? Strings.Format("contentSize", session.Settings.PreparedSize(selectedPhoto.Info.Size).Width, session.Settings.PreparedSize(selectedPhoto.Info.Size).Height) : "";
         reveal.Visibility = session.Result?.Outputs.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         issues.Visibility = session.Issues.Count > 0 ? Visibility.Visible : Visibility.Collapsed;

@@ -303,6 +303,18 @@
       "platforms": [
         "windows"
       ]
+    },
+    "metadataKeptSummary": {
+      "text": "Metadata kept",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "metadataRemovedSummary": {
+      "text": "Metadata removed",
+      "platforms": [
+        "windows"
+      ]
     }
   }
 }
