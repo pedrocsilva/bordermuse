@@ -14,7 +14,7 @@
     <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />
     <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
     <ProjectReference Include="../../packages/imaging-windows/BorderMuse.Imaging.Windows.csproj" />
-    <Content Include="Assets/AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="Assets/AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../LICENSE" Link="Legal/LICENSE" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
