@@ -1,0 +1,84 @@
+name: Windows parity
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  codec-fixtures:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: swift scripts/windows/make-color-fixtures.swift build/qa/shared-color
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: BorderMuse-synthetic-codec-fixtures
+          path: build/qa/shared-color/
+  portable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Test catalog and generate localization resources
+        run: |
+          python3 -m unittest discover -s scripts/localization -p 'test_*.py'
+          python3 scripts/localization/generate.py
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test tests/dotnet/BorderMuse.Tests.csproj -c Release
+  native-codecs:
+    needs: codec-fixtures
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Generate app localization resources
+        run: python scripts/localization/generate.py
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - name: Portable conformance and application behavior
+        run: dotnet test tests/dotnet/BorderMuse.Tests.csproj -c Release
+      - name: Native codec verification with synthetic images
+        run: dotnet test tests/windows/BorderMuse.Windows.Tests.csproj -c Release
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: BorderMuse-synthetic-codec-fixtures
+          path: build/qa/shared-color
+      - name: Shared sRGB, P3, depth and opaque metadata round trips
+        env:
+          BORDERMUSE_COLOR_FIXTURES: ${{ github.workspace }}/build/qa/shared-color
+        run: dotnet test tests/windows-color/BorderMuse.Color.Tests.csproj -c Release
+  windows-app:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Generate app localization resources
+        run: python scripts/localization/generate.py
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - name: Verify Windows CLI
+        run: dotnet run --project apps/cli-dotnet/bordermuse.csproj -c Release -- --help
+      - name: Publish self-contained Windows app
+        run: dotnet publish apps/windows/BorderMuse.Windows.csproj -c Release -p:Platform=x64 -r win-x64 -o build/windows/win-x64
+      - name: Native workspace smoke test and appearance captures
+        shell: pwsh
+        run: ./scripts/windows/test-ui.ps1 -AppPath build/windows/win-x64/BorderMuse.exe -ReportDirectory build/qa/windows-ui
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: BorderMuse-windows-qa
+          path: build/qa/windows-ui/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: BorderMuse-windows-development-x64
+          path: build/windows/win-x64/
+          if-no-files-found: error

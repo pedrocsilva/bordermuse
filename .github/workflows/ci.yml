@@ -9,11 +9,19 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   geometry:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test catalog and generate localization resources
+        run: |
+          python3 -m unittest discover -s scripts/localization -p 'test_*.py'
+          python3 scripts/localization/generate.py
       - name: Test release planning and artifact validation
         run: python3 -m unittest discover -s scripts/release -p 'test_*.py'
       - name: Check shared geometry contract
@@ -38,6 +46,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Generate app localization resources
+        run: python3 scripts/localization/generate.py
       - name: Check macOS shell scripts
         run: for script in scripts/macos/*.sh; do bash -n "$script"; done
       - name: Test geometry, imaging, and app services

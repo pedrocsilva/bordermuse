@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../core-dotnet/BorderMuse.Core.csproj" /><FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" /></ItemGroup>
+</Project>

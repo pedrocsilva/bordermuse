@@ -1,4 +1,6 @@
-# Install Border Muse for macOS
+# Install Border Muse
+
+## macOS
 
 Requires macOS 14+. Check [GitHub releases](https://github.com/pedrocsilva/bordermuse/releases)
 for available builds and their source revision. Downloads may predate current
@@ -22,3 +24,19 @@ Report problems with source/release revision, macOS version, Mac architecture,
 input format and reproduction steps. Check personal photos and metadata before
 sharing them. Native accessibility and independent installation validation remain
 part of [the delivery plan](PLAN.md).
+
+## Windows development builds
+
+Windows is in development with full macOS feature parity as the acceptance target.
+There is no Windows release yet. For a tested development revision, open its
+[Windows parity workflow](https://github.com/pedrocsilva/bordermuse/actions/workflows/windows.yml)
+and download the `BorderMuse-windows-development-x64` artifact from a successful run.
+Extract the complete ZIP to a folder and run `BorderMuse.exe` there. Keep the
+runtime files and `Legal` folder together; the executable alone is insufficient.
+The app includes its .NET and Windows App SDK runtimes and is unsigned.
+
+The automated workflow uses Windows x64. Narrator, real drag/drop and file panels,
+display scaling/high contrast, real-photo comparison and clean-machine installation
+still need hands-on validation. See [Windows parity](WINDOWS_PARITY.md) before
+interpreting a development build as release-ready. Build from source with the
+[Windows development instructions](DEVELOPING.md#windows-development).

@@ -7,6 +7,9 @@ own renderers.
 ```text
 apps/macos ─┬─> packages/imaging-apple ─> geometry-swift
 apps/cli ───┘
+apps/windows ─┬─> core-dotnet ────────> geometry-dotnet
+              └─> imaging-windows ───> core-dotnet
+apps/cli-dotnet ─> imaging-windows
 external editors / examples ───────────> geometry-swift
 ```
 
@@ -20,6 +23,11 @@ external editors / examples ───────────> geometry-swift
 | `packages/imaging-apple/` | macOS image decoding, orientation, resizing, compositing, color, metadata and encoding |
 | `apps/macos/` | SwiftUI workspace, sessions, presets, file access and batch export |
 | `apps/cli/` | Command-line file export through the Apple adapter |
+| `packages/geometry-dotnet/` | Exact portable .NET geometry using the shared corpus |
+| `packages/core-dotnet/` | Windows-independent settings, presets, sessions and batch behavior |
+| `packages/imaging-windows/` | WIC decoding, color, metadata, compositing and encoding |
+| `apps/windows/` | Native WinUI workspace, activation, pickers and Explorer integration |
+| `apps/cli-dotnet/` | Command-line export through the Windows adapter |
 | `examples/swift-editor/` | Independent consumer of the geometry product, without app/rendering dependencies |
 
 The root Swift package has no Apple imaging or app dependencies. Conformance
@@ -62,6 +70,6 @@ system and export pipeline. Prefer the current Swift package when applicable;
 otherwise add a small native port running the same corpus. Decide on a compiled
 bridge only if a real integration justifies its build/distribution cost.
 
-Linux conformance and an independent consumer are configured in CI. macOS app
-and rendering checks remain separate. Windows/iOS support and non-Swift packages
-need their own validation before being advertised.
+Linux Swift/.NET conformance and an independent Swift consumer run in CI. macOS
+app/rendering and Windows app/codec checks remain separate. The Windows port has
+[explicit parity gates](WINDOWS_PARITY.md); iOS has no implementation.

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion><SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWinUI>true</UseWinUI><WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained><SelfContained>true</SelfContained>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers><Platforms>x64;ARM64</Platforms>
+    <ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>Assets/AppIcon.ico</ApplicationIcon>
+    <AssemblyName>BorderMuse</AssemblyName><RootNamespace>BorderMuse.Windows</RootNamespace>
+    <Version>0.1.0</Version><FileVersion>0.1.0.2</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
+    <ProjectReference Include="../../packages/imaging-windows/BorderMuse.Imaging.Windows.csproj" />
+    <Content Update="Assets/AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../LICENSE" Link="Legal/LICENSE" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(PkgMicrosoft_WindowsAppSDK_WinUI)/license.txt" Link="Legal/WindowsAppSDK/license.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(PkgMicrosoft_WindowsAppSDK_WinUI)/NOTICE.txt" Link="Legal/WindowsAppSDK/NOTICE.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="CopyRuntimeNotices" AfterTargets="Publish">
+    <ItemGroup>
+      <RuntimeLegal Include="%(ResolvedRuntimePack.PackageDirectory)/LICENSE*;%(ResolvedRuntimePack.PackageDirectory)/THIRD*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RuntimeLegal)" DestinationFolder="$(PublishDir)Legal/dotnet" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
