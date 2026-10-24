@@ -13,6 +13,15 @@ public sealed partial class MainWindow
     internal async Task SmokeAsync(string directory)
     {
         Directory.CreateDirectory(directory);
+        using (var process = System.Diagnostics.Process.GetCurrentProcess())
+        {
+            foreach (string name in new[] { "coreclr.dll", "Microsoft.UI.Xaml.dll" })
+            {
+                var module = process.Modules.Cast<System.Diagnostics.ProcessModule>().SingleOrDefault(m => string.Equals(m.ModuleName, name, StringComparison.OrdinalIgnoreCase));
+                if (module is null || !Path.GetFullPath(module.FileName).StartsWith(Path.GetFullPath(AppContext.BaseDirectory), StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("The published app did not load its bundled " + name + ".");
+            }
+        }
         for (int attempt = 0; root.XamlRoot is null && attempt < 100; attempt++)
             await Task.Delay(50);
         if (root.XamlRoot is null)
@@ -142,7 +151,8 @@ public sealed partial class MainWindow
             redirectedFileImported = true,
             resizeChoicesValidated = true,
             partialFailureRetryValidated = true,
-            liveCancellationValidated = true
+            liveCancellationValidated = true,
+            bundledRuntimesValidated = true
         }));
         allowClose = true;
         Close();
