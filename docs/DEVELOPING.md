@@ -79,9 +79,23 @@ Manual and independent installation checks are tracked in [the plan](PLAN.md).
 
 ## App and artwork conventions
 
-macOS strings live in `en-US.lproj/Localizable.strings`; Windows strings live in
-`packages/core-dotnet/Resources/en-US.json`. Both use US English. Presets use
-`BorderMuse/presets-v1.json` in macOS Application Support or the Windows roaming AppData folder.
+Edit app text in the shared `resources/strings/en-US.json` catalog, then run:
+
+```bash
+python3 scripts/localization/generate.py
+python3 -m unittest discover -s scripts/localization -p 'test_*.py'
+python3 scripts/localization/generate.py --check
+```
+
+The generator writes macOS `Localizable.strings` and the embedded Windows JSON.
+Both outputs are checked in for native builds; CI rejects stale or hand-edited
+outputs. Installed apps need no generator or Python. Plain messages are strings;
+formatted entries declare ordered, named `integer`/`string` arguments and use
+`{name}` placeholders. The generator supplies Swift positional format specifiers
+and .NET numeric formatting. Entries may declare platform `overrides` (Finder
+versus Explorer) or `platforms` for platform-only messages. App text remains US English.
+
+Presets use `BorderMuse/presets-v1.json` in macOS Application Support or the Windows roaming AppData folder.
 Use native macOS controls and system typography; UI colors are defined in
 `apps/macos/BorderMuse/Workspace/WorkspaceStyle.swift`. Keep preview appearance
 separate from export fill. Brand artwork and icon generation are in

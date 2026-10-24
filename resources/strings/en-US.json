@@ -1,0 +1,302 @@
+{
+  "locale": "en-US",
+  "strings": {
+    "appName": "Border Muse",
+    "borderSettings": "Border settings",
+    "batchEmpty": "Add photos to begin",
+    "batchOne": "1 photo",
+    "batchAll": {
+      "text": "All {count} photos",
+      "arguments": [
+        {
+          "name": "count",
+          "type": "integer"
+        }
+      ]
+    },
+    "savePresetShort": "Save",
+    "summarySize": "Size",
+    "summaryFormat": "Format",
+    "summaryMetadata": "Metadata",
+    "originalResolution": "Original resolution",
+    "sizeLimit": {
+      "text": "Up to {longEdge} px",
+      "arguments": [
+        {
+          "name": "longEdge",
+          "type": "integer"
+        }
+      ]
+    },
+    "invalidSize": "Review size",
+    "sourceFormat": "Source format",
+    "metadataKept": "Kept",
+    "metadataRemoved": "Removed",
+    "contentSize": {
+      "text": "Content: {width} × {height} px",
+      "arguments": [
+        {
+          "name": "width",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "type": "integer"
+        }
+      ]
+    },
+    "canvasSize": {
+      "text": "Canvas: {width} × {height} px",
+      "arguments": [
+        {
+          "name": "width",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "type": "integer"
+        }
+      ]
+    },
+    "addPhotos": "Add Photos",
+    "export": {
+      "text": "Export {count} Photos",
+      "arguments": [
+        {
+          "name": "count",
+          "type": "integer"
+        }
+      ]
+    },
+    "exportOne": "Export Photo",
+    "exportMenu": "Export Photos",
+    "emptyTitle": "A little room for your photos.",
+    "emptySubtitle": "Drop photos here to frame them for export.",
+    "formats": "JPEG, PNG, and TIFF",
+    "preset": "Preset",
+    "custom": "Custom",
+    "original": "Original",
+    "square": "Square",
+    "portrait": "Portrait",
+    "savePreset": "Save Preset",
+    "deletePreset": "Delete Preset",
+    "presetName": "Preset name",
+    "presetActions": "Preset actions",
+    "thicknessError": "Enter a whole number from 0 to 50 for thickness.",
+    "longEdgeError": "Enter a long edge from 1 to 100,000 pixels.",
+    "qualityError": "Enter a whole number from 1 to 100 for JPEG quality.",
+    "previewSummary": {
+      "text": "Preview of {filename}. {dimensions}",
+      "arguments": [
+        {
+          "name": "filename",
+          "type": "string"
+        },
+        {
+          "name": "dimensions",
+          "type": "string"
+        }
+      ]
+    },
+    "photos": "Photos",
+    "photosKeyboardHelp": "Use the Left and Right Arrow keys to select a photo. Press Delete to remove it.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "ratio": "Aspect Ratio",
+    "thickness": "Thickness",
+    "exportOptions": "Export Options",
+    "reduceSize": "Reduce content size",
+    "longEdge": "Long edge (px)",
+    "quality": "JPEG Quality",
+    "metadata": "Keep metadata",
+    "metadataHelp": "Includes camera details and location when present.",
+    "sizeHelp": "Content size before the border. Smaller photos are never enlarged.",
+    "formatHelp": "Exports keep the source file format and color profile. JPEG photos are re-encoded when a border is added.",
+    "applyAll": "Applies to all photos",
+    "output": {
+      "text": "Output: {width} × {height} px",
+      "arguments": [
+        {
+          "name": "width",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "type": "integer"
+        }
+      ]
+    },
+    "position": {
+      "text": "Photo {current} of {total}",
+      "arguments": [
+        {
+          "name": "current",
+          "type": "integer"
+        },
+        {
+          "name": "total",
+          "type": "integer"
+        }
+      ]
+    },
+    "loading": "Preparing photos…",
+    "exporting": {
+      "text": "Exporting {current} of {total}",
+      "arguments": [
+        {
+          "name": "current",
+          "type": "integer"
+        },
+        {
+          "name": "total",
+          "type": "integer"
+        }
+      ]
+    },
+    "complete": {
+      "text": "{count} exported",
+      "arguments": [
+        {
+          "name": "count",
+          "type": "integer"
+        }
+      ]
+    },
+    "cancelled": {
+      "text": "Export canceled. {count} saved.",
+      "arguments": [
+        {
+          "name": "count",
+          "type": "integer"
+        }
+      ]
+    },
+    "showFinder": {
+      "text": "Show in Finder",
+      "overrides": {
+        "windows": "Show in Explorer"
+      }
+    },
+    "issues": {
+      "text": "Review Issues ({count})",
+      "arguments": [
+        {
+          "name": "count",
+          "type": "integer"
+        }
+      ]
+    },
+    "issuesTitle": "Issues to review",
+    "retry": "Retry Failed Photos…",
+    "done": "Done",
+    "clear": "Remove All Photos",
+    "remove": "Remove Photo",
+    "chooseFolder": "Choose Export Folder",
+    "choose": "Export Here",
+    "genericImportError": "This photo could not be opened. Check that it is available and try again.",
+    "genericExportError": "This photo could not be saved. Check the destination folder and try again.",
+    "presetError": {
+      "text": "Presets could not be saved. Check access to Application Support and try again.",
+      "overrides": {
+        "windows": "Presets could not be saved. Check access to AppData and try again."
+      }
+    },
+    "closeTitle": "Stop the current export?",
+    "closeMessage": "Photos already exported will remain in the destination folder.",
+    "stopQuit": "Stop and Quit",
+    "keepWorking": "Keep Exporting",
+    "preview": "Photo preview with export border",
+    "selectPhoto": {
+      "text": "Select {filename}",
+      "arguments": [
+        {
+          "name": "filename",
+          "type": "string"
+        }
+      ]
+    },
+    "about": "About Border Muse",
+    "hide": "Hide Border Muse",
+    "hideOthers": "Hide Others",
+    "showAll": "Show All",
+    "quit": "Quit Border Muse",
+    "fileMenu": "File",
+    "editMenu": "Edit",
+    "windowMenu": "Window",
+    "minimize": "Minimize",
+    "zoom": "Zoom",
+    "close": "Close Window",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "selectAll": "Select All",
+    "ratioError": {
+      "text": "Choose Original or a ratio such as 4:5.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "unreadableError": {
+      "text": "This image could not be read.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "unsupportedError": {
+      "text": "Choose a single JPEG, PNG, or TIFF image with 8-bit or 16-bit color.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "sourceChangedError": {
+      "text": "This photo changed after it was added. Add it again or retry to use the updated file.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "allocationError": {
+      "text": "This canvas needs too much memory. Choose a smaller content size.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "sameFileError": {
+      "text": "Choose an output file different from the original.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "writeError": {
+      "text": "The image could not be saved. Check the destination folder.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "aboutVersion": {
+      "text": "Border Muse 0.1.0 — Windows development build",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "more": {
+      "text": "More",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "importError": {
+      "text": "This photo could not be opened. Check that it is available and try again.",
+      "platforms": [
+        "windows"
+      ]
+    },
+    "cliHelp": {
+      "text": "Usage: bordermuse --input PATH --output PATH --border-percent 0-50 --aspect-ratio original|W:H",
+      "platforms": [
+        "windows"
+      ]
+    }
+  }
+}
