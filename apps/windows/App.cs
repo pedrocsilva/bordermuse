@@ -34,10 +34,12 @@ public sealed partial class App : Application
         instance.Activated += (_, activation) => window.DispatcherQueue.TryEnqueue(async () =>
         {
             window.Activate();
-            if (activation.Data is FileActivatedEventArgs files)
+            if (activation.Data is IFileActivatedEventArgs files)
                 await window.ImportAsync(files.Files.OfType<StorageFile>().Select(f => f.Path));
-            else if (activation.Data is CommandLineActivatedEventArgs command)
+            else if (activation.Data is ICommandLineActivatedEventArgs command)
                 await window.ImportAsync(Shell.Arguments(command.Operation.Arguments).Skip(1));
+            else if (activation.Data is ILaunchActivatedEventArgs launch)
+                await window.ImportAsync(Shell.Arguments(launch.Arguments).Skip(1).Where(File.Exists));
         });
         window.Activate();
         await window.ImportAsync(Environment.GetCommandLineArgs().Skip(1).Where(File.Exists));

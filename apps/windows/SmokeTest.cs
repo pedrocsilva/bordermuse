@@ -82,6 +82,20 @@ public sealed partial class MainWindow
         inspectorScroll.ChangeView(null, double.MaxValue, null, true);
         await Task.Delay(250);
         await Capture(Path.Combine(directory, "dark-minimum-options.png"));
+        string activated = Path.Combine(directory, "activated photo.png");
+        File.Copy(input, activated);
+        var start = new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
+        start.ArgumentList.Add(activated);
+        using (var secondary = System.Diagnostics.Process.Start(start)!)
+        {
+            await secondary.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(20));
+            if (secondary.ExitCode != 0)
+                throw new InvalidOperationException("Secondary instance did not redirect activation.");
+        }
+        for (int attempt = 0; session.Photos.Count < 2 && attempt < 100; attempt++)
+            await Task.Delay(50);
+        if (session.Photos.Count != 2 || !session.Photos.Any(p => p.Path == activated))
+            throw new InvalidOperationException("An ordinary second launch did not import its photo into the existing window.");
         File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(new
         {
             passed = true,
@@ -90,7 +104,8 @@ public sealed partial class MainWindow
             originalPreserved = true,
             existingOutputPreserved = true,
             presetRestored = true,
-            invalidDraftBlocked = true
+            invalidDraftBlocked = true,
+            redirectedFileImported = true
         }));
         allowClose = true;
         Close();
