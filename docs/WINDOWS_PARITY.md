@@ -1,0 +1,35 @@
+# Windows feature parity
+
+The first Windows alpha targets the complete macOS `0.1.0-alpha.2` feature set.
+The Windows app is development work; source/CI artifacts do not establish release
+readiness. No macOS geometry or rendering behavior changes as part of this port.
+
+| Capability | Windows implementation | Release gate |
+| --- | --- | --- |
+| Exact canvas, all ratios, thickness 0–50, Original | Independent .NET geometry package | All 20 canonical cases and arithmetic boundary/error checks |
+| JPEG/PNG/single-image TIFF, orientations, 8/16-bit | Separate WIC adapter | Native synthetic format/orientation/depth tests plus real photos |
+| White fill, optional content reduction, JPEG quality | Windows renderer | Dimensions, filter quality and white/transparent compositing checks |
+| Color profiles and metadata keep/remove | WIC color contexts and cloned metadata | sRGB/P3 and camera/GPS/XMP round trips; no silent unsupported HDR conversion |
+| Preview uses export geometry | Native WinUI canvas and shared geometry call | Preview/export agreement at multiple DPI settings |
+| Photo import, removal, selection, deduplication | Portable session and native filmstrip | Core tests plus actual file panels, keyboard and drag/drop |
+| Versioned presets | Shared JSON schema and portable store | Persistence, invalid documents, failed writes, cross-platform settings |
+| Batch progress/cancel, partial errors/retry | Portable serial exporter and Windows dialogs | Cancellation during encoding, retry, denied access and quit cleanup |
+| Original/existing output protection | Version check, temporary file, non-overwriting move | Hash/overwrite/race checks |
+| File-manager opening/reveal | Activation routing and Explorer selection | Open With and multi-file reveal on an installed copy |
+| Accessibility and light/dark/minimum size | Native controls, labels and theme changes | Narrator, full keyboard traversal, high contrast, resizing and DPI review |
+| Developer CLI | `apps/cli-dotnet`, same renderer | Matching arguments and native export tests |
+| Distribution | Self-contained x64 development artifact | Clean-machine installation, ARM64 decision, signing/security-prompt documentation |
+
+`packages/geometry-dotnet` depends only on .NET. `packages/core-dotnet` owns
+settings, presets and batch/session behavior without Windows references.
+`packages/imaging-windows` uses the managed Windows Imaging Component APIs
+exposed by the Windows desktop framework. `apps/windows` supplies WinUI controls,
+file panels, activation and Explorer integration. macOS remains native SwiftUI.
+
+The measured JSON corpus is linked into the .NET tests unchanged. All ports use
+the same contract identifier. Pixel preparation/encoding have separate checks:
+geometry agreement does not promise identical filters or encoded files.
+
+Portable tests can run on macOS/Linux. Native imaging tests and complete WinUI
+packaging must run on Windows; `.github/workflows/windows.yml` does both and
+uploads a development app. Manual gates above remain open until evidence exists.

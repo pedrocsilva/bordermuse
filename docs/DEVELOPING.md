@@ -28,6 +28,29 @@ The Xcode scheme and executable are `BorderMuse`. Build a universal app with
 use `swift run --package-path apps/cli bordermuse --help` for options.
 Scripts select `/Applications/Xcode.app` when present without global changes.
 
+## Windows development
+
+The Windows port targets feature parity; see [its acceptance checklist](WINDOWS_PARITY.md).
+Install the .NET 10 SDK. Portable tests run on any supported .NET host:
+
+```bash
+dotnet test tests/dotnet/BorderMuse.Tests.csproj
+```
+
+On Windows (Windows 10 build 19041+ target; installation still needs validation):
+
+```powershell
+dotnet test tests/windows/BorderMuse.Windows.Tests.csproj
+dotnet run --project apps/windows/BorderMuse.Windows.csproj -p:Platform=x64 -r win-x64
+dotnet publish apps/windows/BorderMuse.Windows.csproj -c Release -p:Platform=x64 -r win-x64 -o build/windows/win-x64
+dotnet run --project apps/cli-dotnet/bordermuse.csproj -- --help
+```
+
+The Windows App SDK and .NET runtime are included in the self-contained app.
+Run `BorderMuse.exe` from the complete published folder. Development ZIPs are
+unsigned and are not Windows releases. The Windows CI workflow runs native codec
+tests and uploads the self-contained folder for inspection.
+
 ## Verification boundaries
 
 - Root Swift/Python tests compare all 20 measured canvases and four margins;
