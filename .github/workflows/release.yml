@@ -1,0 +1,115 @@
+name: macOS prerelease
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+  # Manual runs always stop at verified artifacts; no tags/releases are created.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+      commit: ${{ steps.plan.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate event, version, source tag and main ancestry
+        id: plan
+        env:
+          RELEASE_EVENT: ${{ github.event_name }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: python3 scripts/release/release.py plan --event "$RELEASE_EVENT" --ref "$RELEASE_REF" --commit "$RELEASE_COMMIT"
+
+  checks:
+    needs: plan
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  package:
+    needs: [plan, checks]
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      RELEASE_VERSION: ${{ needs.plan.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.commit }}
+          persist-credentials: false
+      - name: Build universal app, ZIP, DMG, checksums and manifest
+        run: bash scripts/macos/package-release.sh "$RELEASE_VERSION" universal
+      - name: Verify packaged app and release files
+        run: |
+          bash scripts/release/verify-app.sh "build/releases/$RELEASE_VERSION" "$RELEASE_VERSION"
+          python3 scripts/release/release.py verify --directory "build/releases/$RELEASE_VERSION" --version "$RELEASE_VERSION" --commit "$RELEASE_COMMIT"
+          python3 scripts/release/release.py notes --directory "build/releases/$RELEASE_VERSION" --version "$RELEASE_VERSION"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-release-${{ needs.plan.outputs.version }}
+          path: build/releases/${{ needs.plan.outputs.version }}/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  release:
+    needs: [plan, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ needs.plan.outputs.version }}
+      RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+      RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: macos-release-${{ needs.plan.outputs.version }}
+          path: build/release
+          digest-mismatch: error
+      - name: Recheck downloaded artifact before publishing
+        run: python3 scripts/release/release.py verify --directory build/release --version "$RELEASE_VERSION" --commit "$RELEASE_COMMIT"
+      - name: Publish experimental prerelease from existing tag
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          BM_REMOTE_COMMIT="$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)"
+          [[ "$BM_REMOTE_COMMIT" == "$RELEASE_COMMIT" ]]
+          gh release create "$RELEASE_TAG" --verify-tag --prerelease --latest=false \
+            --title "Border Muse $RELEASE_VERSION — macOS" \
+            --notes-file build/release/release-notes.md \
+            "build/release/BorderMuse-$RELEASE_VERSION-macos-universal.zip" \
+            "build/release/BorderMuse-$RELEASE_VERSION-macos-universal.dmg" \
+            build/release/SHA256SUMS.txt build/release/release-manifest.json
+      - name: Report result
+        env:
+          RELEASE_EVENT: ${{ github.event_name }}
+        run: |
+          if [[ "$RELEASE_EVENT" == workflow_dispatch ]]; then
+            echo 'Dry run passed. Verified artifacts are available on this run; no tag or release was created.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Published experimental prerelease $RELEASE_TAG from $RELEASE_COMMIT." >> "$GITHUB_STEP_SUMMARY"
+          fi

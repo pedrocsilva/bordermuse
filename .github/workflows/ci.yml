@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  geometry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test release planning and artifact validation
+        run: python3 -m unittest discover -s scripts/release -p 'test_*.py'
+      - name: Check shared geometry contract
+        run: python3 -m unittest discover -s geometry -p 'test_*.py'
+
+  geometry-swift:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test portable geometry and bundled conformance fixtures
+        run: swift test
+      - name: Build and run an independent geometry consumer
+        run: swift run --package-path examples/swift-editor
+
+  macos-app:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check macOS shell scripts
+        run: for script in scripts/macos/*.sh; do bash -n "$script"; done
+      - name: Test geometry, imaging, and app services
+        env:
+          # Hosted Intel VMs abort in Metal; Apple silicon runs the full render checks.
+          BORDER_MUSE_SKIP_RENDER_TESTS: ${{ matrix.runner == 'macos-15-intel' && '1' || '0' }}
+        run: bash scripts/macos/test.sh
+      - name: Build standalone CLI
+        run: swift build --package-path apps/cli -c release
+      - name: Build local app
+        run: bash scripts/macos/build.sh
+      - name: Build Xcode project without a distribution identity
+        run: xcodebuild -project apps/macos/BorderMuse.xcodeproj -scheme BorderMuse -configuration Debug -derivedDataPath build/xcode CODE_SIGNING_ALLOWED=NO build
+      - name: Archive local app for CI inspection
+        run: ditto -c -k --keepParent build/macos/BorderMuse.app build/macos/BorderMuse-ci.zip
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: BorderMuse-local-${{ matrix.runner }}
+          path: build/macos/BorderMuse-ci.zip

@@ -1,0 +1,29 @@
+{
+  "product": "Border Muse",
+  "files": [
+    {
+      "path": "symbol-ink.svg",
+      "sha256": "acbd9c8f5f3826f40d1dd3ce30c7c1ccabf576b3ef9da394020edde020c39409"
+    },
+    {
+      "path": "symbol-paper.svg",
+      "sha256": "c7e972ff7246be9bab2dce45e62415ae72618eb09163370d594cb671a1f50857"
+    },
+    {
+      "path": "logo-ink.svg",
+      "sha256": "cf17739b92030460e422c56f8f136afe19518b37df6c4af48b112fa41f9cd948"
+    },
+    {
+      "path": "logo-paper.svg",
+      "sha256": "654552294a734c41632c403182928f301cbe7ed84ffdc8560bfb9375ff20c41a"
+    },
+    {
+      "path": "app-icon.svg",
+      "sha256": "15360499e0c65bb6bfd6413e59e49194cbaa6de873bd1b8c53269ac7069e4ee2"
+    },
+    {
+      "path": "app-icon-1024.png",
+      "sha256": "45260317911734ac3d1adacdd9ad3de6c5e07ce7876c85a4cfde91c5507d0bbe"
+    }
+  ]
+}

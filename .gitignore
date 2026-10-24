@@ -1,0 +1,16 @@
+.DS_Store
+.build/
+.swiftpm/
+build/
+__pycache__/
+xcuserdata/
+*.xcuserstate
+*.zip
+*.dmg
+.env
+.env.*
+!.env.example
+*.p12
+*.key
+*.mobileprovision
+*.provisionprofile
