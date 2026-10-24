@@ -1,6 +1,7 @@
 # Border Muse
 
 - Border Muse is the brand; use `BorderMuse` in Swift names and `bordermuse` in CLI names.
+- Work directly on `main`, the default branch. Create branches or pull requests only when the user asks.
 - Keep geometry portable. Apps and rendering adapters depend on it, never the reverse.
 - Before geometry changes, read [the specification](docs/GEOMETRY_SPEC.md). Preserve exact arithmetic, symmetric margins and all 20 measured cases. Orientation, resizing and fill color are separate concerns. Discuss output changes before implementing them.
 - Preserve fixture inputs, outputs, filenames, hashes and confirmed corrections. New ports must run the shared conformance cases.
