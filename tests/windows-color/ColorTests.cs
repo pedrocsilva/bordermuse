@@ -100,6 +100,7 @@ public sealed class ColorTests
             string input = Path.Combine(inputFolder, filename);
             {
                 var info = processor.Inspect(input);
+                Assert.Equal(6, info.Orientation);
                 var before = Read(input);
                 if (filename.StartsWith("P3"))
                     Assert.NotNull(Profile(before));
@@ -109,9 +110,11 @@ public sealed class ColorTests
                     string output = Path.Combine(outputFolder, keep + Path.GetFileName(input));
                     processor.Export(input, output, new BorderSettings { Ratio = "5:4", Thickness = 7, KeepMetadata = keep }, info.Version, default);
                     var after = Read(output);
-                    Assert.Equal(107, after.PixelWidth);
-                    Assert.Equal(85, after.PixelHeight);
-                    Assert.Equal(info.BitsPerComponent, processor.Inspect(output).BitsPerComponent);
+                    Assert.Equal(135, after.PixelWidth);
+                    Assert.Equal(107, after.PixelHeight);
+                    var exported = processor.Inspect(output);
+                    Assert.Equal(1, exported.Orientation);
+                    Assert.Equal(info.BitsPerComponent, exported.BitsPerComponent);
                     Assert.Equal(Profile(before), Profile(after));
                     Assert.Equal(keep, HasMarker(output));
                     if (filename.EndsWith(".png"))
@@ -119,7 +122,7 @@ public sealed class ColorTests
                         Assert.NotNull(PngExif(input));
                         Assert.Equal(keep, PngExif(output) is not null);
                     }
-                    byte[] a = Pixel(before, 50, 33), b = Pixel(after, 53, 42);
+                    byte[] a = Pixel(before, 50, 33), b = Pixel(after, 67, 53);
                     for (int c = 0; c < 3; c++)
                         Assert.InRange(Math.Abs(BinaryPrimitives.ReadUInt16LittleEndian(a.AsSpan(c * 2, 2)) - BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(c * 2, 2))), 0, info.BitsPerComponent == 16 ? 2 : 514);
                     if (info.BitsPerComponent == 16)

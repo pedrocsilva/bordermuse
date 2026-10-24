@@ -25,7 +25,7 @@ for (profile, space) in [("sRGB", CGColorSpace.sRGB), ("P3", CGColorSpace.displa
         precondition(CGImageMetadataRegisterNamespaceForPrefix(metadata, "https://example.invalid/bordermuse/qa/1.0/" as CFString, "bmqa" as CFString, &error))
         precondition(CGImageMetadataSetValueWithPath(metadata, nil, "bmqa:Marker" as CFString, "Synthetic BorderMuse metadata" as CFString))
         let properties: [CFString: Any] = [
-            kCGImagePropertyOrientation: 1,
+            kCGImagePropertyOrientation: 6,
             kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFMake: "QA Camera", kCGImagePropertyTIFFArtist: "QA Author"],
             kCGImagePropertyExifDictionary: [kCGImagePropertyExifDateTimeOriginal: "2020:01:02 03:04:05", kCGImagePropertyExifLensModel: "QA Lens"],
             kCGImagePropertyGPSDictionary: [kCGImagePropertyGPSLatitude: 0.0, kCGImagePropertyGPSLatitudeRef: "N", kCGImagePropertyGPSLongitude: 0.0, kCGImagePropertyGPSLongitudeRef: "E"],

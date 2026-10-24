@@ -8,7 +8,7 @@ Its resolved revision is in `apps/cli/Package.resolved`. Binary distributors mus
 retain applicable license and notice material.
 
 The Windows app uses Microsoft Windows App SDK and .NET, distributed under their
-MIT licenses and applicable third-party notices. Self-contained binary distributors
+respective binary license terms and third-party notices. Self-contained binary distributors
 must retain the runtime license/notice files. The Windows imaging adapter uses
 system Windows Imaging Component APIs. Test dependencies are development tools
 and are not shipped in the app.
