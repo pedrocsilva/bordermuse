@@ -60,6 +60,30 @@ public sealed partial class MainWindow
         await session.ExportAsync(exports);
         if (!File.Exists(Path.Combine(exports, "synthetic-border-2.png")) || !File.ReadAllBytes(first).SequenceEqual(firstBytes) || !File.ReadAllBytes(input).SequenceEqual(original))
             throw new InvalidOperationException("Export overwrite/original protection failed.");
+        var sourceSize = session.Photos[0].Info.Size;
+        photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == 2048);
+        await Task.Delay(50);
+        if (!session.Settings.ReduceSize || session.Settings.LongEdge != 2048 || session.Settings.PreparedSize(sourceSize) != sourceSize)
+            throw new InvalidOperationException("The 2048 preset must retain smaller photos without enlargement.");
+        photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == -1);
+        longEdge.Text = "51";
+        await Task.Delay(50);
+        if (session.Settings.PreparedSize(sourceSize) != new BorderMuse.Geometry.PixelSize(51, 34))
+            throw new InvalidOperationException("Custom photo resizing did not prepare the expected dimensions.");
+        session.SavePreset("Resized QA");
+        var resizedPreset = session.SelectedPreset;
+        longEdge.Text = "abc";
+        await Task.Delay(50);
+        if (session.CanExport) throw new InvalidOperationException("Invalid custom size did not block export.");
+        photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == 0);
+        await Task.Delay(50);
+        if (!session.CanExport || session.Settings.ReduceSize) throw new InvalidOperationException("Original size did not clear the hidden invalid draft.");
+        session.UsePreset(resizedPreset);
+        SyncSettings();
+        if (photoSize.SelectedItem is not SizeChoice { LongEdge: -1 } || session.Settings.LongEdge != 51)
+            throw new InvalidOperationException("Existing resize settings did not restore the Custom choice.");
+        session.UsePreset(id);
+        SyncSettings();
         options.IsExpanded = true;
         await Task.Delay(300);
         await Capture(Path.Combine(directory, "light-expanded-options.png"));
@@ -111,7 +135,8 @@ public sealed partial class MainWindow
             existingOutputPreserved = true,
             presetRestored = true,
             invalidDraftBlocked = true,
-            redirectedFileImported = true
+            redirectedFileImported = true,
+            resizeChoicesValidated = true
         }));
         allowClose = true;
         Close();

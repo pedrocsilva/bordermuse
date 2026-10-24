@@ -43,12 +43,11 @@
 "ratio" = "Aspect Ratio";
 "thickness" = "Thickness";
 "exportOptions" = "Export Options";
-"reduceSize" = "Reduce content size";
 "longEdge" = "Long edge (px)";
 "quality" = "JPEG Quality";
 "metadata" = "Keep metadata";
 "metadataHelp" = "Includes camera details and location when present.";
-"sizeHelp" = "Content size before the border. Smaller photos are never enlarged.";
+"sizeHelp" = "Photo size before the border. Smaller photos are never enlarged.";
 "formatHelp" = "Exports keep the source file format and color profile. JPEG photos are re-encoded when a border is added.";
 "applyAll" = "Applies to all photos";
 "output" = "Output: %1$ld × %2$ld px";
@@ -92,3 +91,6 @@
 "copy" = "Copy";
 "paste" = "Paste";
 "selectAll" = "Select All";
+"photoSize" = "Photo size";
+"size2048" = "Up to 2,048 px";
+"sizeBeforeBorder" = "Before adding the border.";

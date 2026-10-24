@@ -42,11 +42,12 @@ public sealed partial class MainWindow : Window
     private readonly ComboBox ratios = new() { HorizontalAlignment = HorizontalAlignment.Stretch }, presets = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
     private readonly TextBox thickness = new() { Width = 64 }, longEdge = new() { Width = 92 }, quality = new() { Width = 64 };
     private readonly Slider slider = new() { Minimum = 0, Maximum = 50, StepFrequency = 1, SmallChange = 1 };
-    private readonly CheckBox reduce = new() { Content = Strings.Text("reduceSize") }, metadata = new() { Content = Strings.Text("metadata") };
+    private readonly ComboBox photoSize = new() { Width = 158, DisplayMemberPath = nameof(SizeChoice.Name) };
+    private readonly CheckBox metadata = new() { Content = Strings.Text("metadata") };
     private readonly ProgressBar progress = new() { Minimum = 0, Maximum = 1 };
     private readonly TextBlock progressLabel = Text("", 12), sizeSummary = Text("", 12), metadataSummary = Text("", 12);
     private readonly StackPanel progressPanel = new() { Spacing = 8 }, inspectorFields = new() { Spacing = 10 };
-    private readonly TextBlock resizeHelp = Text(Strings.Text("sizeHelp"), 12);
+    private readonly TextBlock resizeHelp = Text(Strings.Text("sizeBeforeBorder"), 12);
     private readonly ScrollViewer inspectorScroll = new() { HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     private readonly Grid longEdgeRow = new();
     private readonly Expander options = new() { Header = Strings.Text("exportOptions"), HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
@@ -307,7 +308,11 @@ public sealed partial class MainWindow : Window
         slider.ValueChanged += (_, e) => { if (!updating) thickness.Text = ((int)Math.Round(e.NewValue)).ToString(Strings.Culture); };
         Id(validation, "settingsError");
         var settings = new StackPanel() { Spacing = 8 };
-        settings.Children.Add(reduce);
+        photoSize.ItemsSource = new[] { new SizeChoice(0, Strings.Text("original")), new SizeChoice(2048, Strings.Text("size2048")), new SizeChoice(-1, Strings.Text("custom")) };
+        settings.Children.Add(Row(Text(Strings.Text("photoSize"), 14), photoSize));
+        Id(photoSize, "photoSizePicker", Strings.Text("photoSize"));
+        AutomationProperties.SetHelpText(photoSize, Strings.Text("sizeHelp"));
+        ToolTipService.SetToolTip(photoSize, Strings.Text("sizeHelp"));
         longEdgeRow.ColumnDefinitions.Add(new()
         {
             Width = new GridLength(1, GridUnitType.Star)
@@ -327,8 +332,17 @@ public sealed partial class MainWindow : Window
 
         options.Content = settings;
         inspectorFields.Children.Add(options);
-        reduce.Checked += (_, _) => ApplySettings();
-        reduce.Unchecked += (_, _) => ApplySettings();
+        photoSize.SelectionChanged += (_, _) =>
+        {
+            if (updating) return;
+            if (photoSize.SelectedItem is SizeChoice choice && choice.LongEdge != 0)
+            {
+                updating = true;
+                longEdge.Text = (choice.LongEdge == 2048 ? 2048 : session.Settings.LongEdge).ToString(Strings.Culture);
+                updating = false;
+            }
+            ApplySettings();
+        };
         metadata.Checked += (_, _) => ApplySettings();
         metadata.Unchecked += (_, _) => ApplySettings();
         longEdge.TextChanged += (_, _) => ApplySettings();
@@ -375,20 +389,22 @@ public sealed partial class MainWindow : Window
             error = Strings.Text("thicknessError");
         if (!int.TryParse(quality.Text, out int q) || q is < 1 or > 100)
             error ??= Strings.Text("qualityError");
-        int edge = session.Settings.LongEdge;
-        if (reduce.IsChecked == true && (!int.TryParse(longEdge.Text, out edge) || edge is < 1 or > 100_000))
+        int choice = (photoSize.SelectedItem as SizeChoice)?.LongEdge ?? 0;
+        int edge = choice == 2048 ? 2048 : session.Settings.LongEdge;
+        if (choice == -1 && (!int.TryParse(longEdge.Text, out edge) || edge is < 1 or > 100_000))
             error ??= Strings.Text("longEdgeError");
         session.InputsValid = error is null;
         validation.Text = error ?? "";
         validation.Visibility = error is null ? Visibility.Collapsed : Visibility.Visible;
         if (error is null)
         {
-            session.Settings = new BorderSettings() { Ratio = (ratios.SelectedItem as RatioChoice)?.Value ?? "original", Thickness = t, Quality = q, ReduceSize = reduce.IsChecked == true, LongEdge = edge, KeepMetadata = metadata.IsChecked == true };
+            session.Settings = new BorderSettings() { Ratio = (ratios.SelectedItem as RatioChoice)?.Value ?? "original", Thickness = t, Quality = q, ReduceSize = choice != 0, LongEdge = edge, KeepMetadata = metadata.IsChecked == true };
             updating = true;
             slider.Value = t;
             updating = false;
         }
-        longEdgeRow.Visibility = resizeHelp.Visibility = reduce.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        longEdgeRow.Visibility = choice == -1 ? Visibility.Visible : Visibility.Collapsed;
+        resizeHelp.Visibility = choice != 0 ? Visibility.Visible : Visibility.Collapsed;
         session.NotifySettingsChanged();
     }
     private void SyncSettings()
@@ -399,10 +415,11 @@ public sealed partial class MainWindow : Window
         slider.Value = s.Thickness;
         quality.Text = s.Quality.ToString(Strings.Culture);
         longEdge.Text = s.LongEdge.ToString(Strings.Culture);
-        reduce.IsChecked = s.ReduceSize;
+        photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == (!s.ReduceSize ? 0 : s.LongEdge == 2048 ? 2048 : -1));
         metadata.IsChecked = s.KeepMetadata;
         ratios.SelectedItem = ratios.Items.Cast<RatioChoice>().First(r => r.Value == s.Ratio);
-        longEdgeRow.Visibility = resizeHelp.Visibility = s.ReduceSize ? Visibility.Visible : Visibility.Collapsed;
+        longEdgeRow.Visibility = s.ReduceSize && s.LongEdge != 2048 ? Visibility.Visible : Visibility.Collapsed;
+        resizeHelp.Visibility = s.ReduceSize ? Visibility.Visible : Visibility.Collapsed;
         options.IsExpanded = s.ReduceSize;
         validation.Text = "";
         validation.Visibility = Visibility.Collapsed;
@@ -651,6 +668,7 @@ public sealed partial class MainWindow : Window
         }
         showingQuit = false;
     }
+    private sealed record SizeChoice(int LongEdge, string Name);
     private sealed record RatioChoice(string Value, string Name);
     private sealed record PresetChoice(Guid? Id, string Name);
     private sealed class PhotoItem(Photo photo) : INotifyPropertyChanged

@@ -34,6 +34,7 @@ public sealed class GeometryTests
         Assert.Equal(CanvasLayout.Calculate(odd, 7), CanvasLayout.Calculate(odd, 7, new AspectRatio(1201, 799)));
         Assert.Equal(new CanvasLayout(107, 85, 3, 3, 9, 9), CanvasLayout.Calculate(new PixelSize(101, 67), 7, new AspectRatio(5, 4)));
         Assert.Equal(new PixelSize(400, 600), new BorderSettings { ReduceSize = true, LongEdge = 600 }.PreparedSize(new PixelSize(801, 1201)));
+        Assert.Equal(new PixelSize(2048, 1365), new BorderSettings { ReduceSize = true, LongEdge = 2048 }.PreparedSize(new PixelSize(6000, 4000)));
         Assert.Equal(new PixelSize(801, 1201), new BorderSettings { ReduceSize = true, LongEdge = 3000 }.PreparedSize(new PixelSize(801, 1201)));
     }
     [Fact]

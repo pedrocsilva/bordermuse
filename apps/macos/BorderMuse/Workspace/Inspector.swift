@@ -7,6 +7,8 @@ struct Inspector: View {
     @ViewState private var showSave = false
     @ViewState private var presetName = ""
     @ViewState private var expanded = false
+    @ViewState private var photoSize: PhotoSize = .original
+    private enum PhotoSize: Hashable { case original, small, custom }
     private let ratios = ["original", "1:1", "5:4", "4:5", "3:2", "2:3", "16:9", "9:16", "2:1", "1:2"]
     private var palette: WorkspacePalette { WorkspacePalette(colorScheme) }
     private var exportForeground: Color {
@@ -78,14 +80,24 @@ struct Inspector: View {
                     }
                     DisclosureGroup(Strings.text("exportOptions"), isExpanded: $expanded) {
                         VStack(alignment: .leading, spacing: 16) {
-                            Toggle(Strings.text("reduceSize"), isOn: $session.settings.reduceSize)
-                            if session.settings.reduceSize {
+                            Picker(Strings.text("photoSize"), selection: $photoSize) {
+                                Text(Strings.text("original")).tag(PhotoSize.original)
+                                Text(Strings.text("size2048")).tag(PhotoSize.small)
+                                Text(Strings.text("custom")).tag(PhotoSize.custom)
+                            }
+                            .accessibilityIdentifier("photoSizePicker")
+                            .accessibilityHint(Strings.text("sizeHelp"))
+                            .help(Strings.text("sizeHelp"))
+                            if photoSize == .custom {
                                 HStack {
                                     Text(Strings.text("longEdge"))
                                     Spacer()
                                     numberField(.longEdge, value: $session.settings.longEdge).frame(width: 78)
                                 }
-                                Text(Strings.text("sizeHelp")).font(WorkspaceStyle.detail).foregroundStyle(palette.secondary)
+                            }
+                            if session.settings.reduceSize {
+                                Text(Strings.text("sizeBeforeBorder")).font(WorkspaceStyle.detail).foregroundStyle(palette.secondary)
+                                    .help(Strings.text("sizeHelp"))
                             }
                             HStack {
                                 Text(Strings.text("quality"))
@@ -130,7 +142,13 @@ struct Inspector: View {
         .background(palette.panel)
         .onChange(of: session.settings) { session.settingsChanged() }
         .onChange(of: session.settings.reduceSize) { if session.settings.reduceSize { expanded = true } }
-        .onAppear { if session.settings.reduceSize { expanded = true } }
+        .onAppear { synchronizePhotoSize(); if session.settings.reduceSize { expanded = true } }
+        .onChange(of: session.settingsRevision) { synchronizePhotoSize() }
+        .onChange(of: photoSize) {
+            session.settings.reduceSize = photoSize != .original
+            if photoSize == .small { session.settings.longEdge = 2048 }
+            if photoSize != .custom { session.setInputValidity(.longEdge, valid: true) }
+        }
         .sheet(isPresented: $showSave) {
             VStack(alignment: .leading, spacing: 20) {
                 Text(Strings.text("savePreset")).font(.headline)
@@ -143,6 +161,9 @@ struct Inspector: View {
                 }
             }.padding(24).frame(width: 320)
         }
+    }
+    private func synchronizePhotoSize() {
+        photoSize = !session.settings.reduceSize ? .original : session.settings.longEdge == 2048 ? .small : .custom
     }
     private func summaryRow(_ key: String, value: String, identifier: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
