@@ -46,6 +46,7 @@ public sealed partial class MainWindow : Window
     private readonly ProgressBar progress = new() { Minimum = 0, Maximum = 1 };
     private readonly TextBlock progressLabel = Text("", 12), sizeSummary = Text("", 12), metadataSummary = Text("", 12);
     private readonly StackPanel progressPanel = new() { Spacing = 8 }, inspectorFields = new() { Spacing = 16 };
+    private readonly ScrollViewer inspectorScroll = new() { HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     private readonly Grid longEdgeRow = new();
     private readonly Expander options = new() { Header = Strings.Text("exportOptions"), HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
     private readonly MenuFlyoutItem deletePreset = new() { Text = Strings.Text("deletePreset") };
@@ -268,8 +269,8 @@ public sealed partial class MainWindow : Window
         {
             Height = GridLength.Auto
         });
-        var scroll = new ScrollViewer() { Content = inspectorFields, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
-        inspector.Children.Add(scroll);
+        inspectorScroll.Content = inspectorFields;
+        inspector.Children.Add(inspectorScroll);
         inspectorFields.Children.Add(Text(Strings.Text("borderSettings"), 16));
         inspectorFields.Children.Add(scope);
         save.Click += async (_, _) => await SavePreset();
@@ -298,8 +299,6 @@ public sealed partial class MainWindow : Window
         thickness.TextChanged += (_, _) => ApplySettings();
         slider.ValueChanged += (_, e) => { if (!updating) thickness.Text = ((int)Math.Round(e.NewValue)).ToString(Strings.Culture); };
         inspectorFields.Children.Add(Divider());
-        validation.Foreground = new SolidColorBrush(Colors.IndianRed);
-        inspectorFields.Children.Add(validation);
         Id(validation, "settingsError");
         var settings = new StackPanel() { Spacing = 14 };
         settings.Children.Add(reduce);
@@ -333,6 +332,7 @@ public sealed partial class MainWindow : Window
         AutomationProperties.SetHelpText(longEdge, Strings.Text("longEdgeError"));
         AutomationProperties.SetHelpText(quality, Strings.Text("qualityError"));
         var footer = new StackPanel() { Spacing = 12, Padding = new Thickness(0, 16, 0, 0) };
+        footer.Children.Add(validation);
         footer.Children.Add(Row(Text(Strings.Text("summarySize"), 12), sizeSummary));
         footer.Children.Add(Row(Text(Strings.Text("summaryFormat"), 12), Text(Strings.Text("sourceFormat"), 12)));
         footer.Children.Add(Row(Text(Strings.Text("summaryMetadata"), 12), metadataSummary));
@@ -357,6 +357,7 @@ public sealed partial class MainWindow : Window
         root.Background = new SolidColorBrush(dark ? Color(0x282828) : Color(0xF6F6F6));
         stage.Background = new SolidColorBrush(dark ? Color(0x212121) : Color(0xE7E7E7));
         previewMessage.Foreground = new SolidColorBrush(dark ? Colors.White : Colors.Black);
+        validation.Foreground = new SolidColorBrush(dark ? Color(0xFFB4AB) : Color(0xB42318));
     }
     private static global::Windows.UI.Color Color(uint rgb) => global::Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
     private void ApplySettings()

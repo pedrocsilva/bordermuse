@@ -70,6 +70,18 @@ public sealed partial class MainWindow
         if (session.CanExport || export.IsEnabled || validation.Visibility != Visibility.Visible)
             throw new InvalidOperationException("Invalid draft did not block export.");
         await Capture(Path.Combine(directory, "dark-minimum-validation.png"));
+        var errorBounds = validation.TransformToVisual(root).TransformBounds(new global::Windows.Foundation.Rect(0, 0, validation.ActualWidth, validation.ActualHeight));
+        if (errorBounds.Top < 0 || errorBounds.Bottom > root.ActualHeight || validation.ActualHeight < 10)
+            throw new InvalidOperationException("Validation explanation is outside the workspace.");
+        root.RequestedTheme = ElementTheme.Light;
+        await Capture(Path.Combine(directory, "light-minimum-validation.png"));
+        root.RequestedTheme = ElementTheme.Dark;
+        thickness.Text = "7";
+        for (int attempt = 0; !session.InputsValid && attempt < 100; attempt++)
+            await Task.Delay(25);
+        inspectorScroll.ChangeView(null, double.MaxValue, null, true);
+        await Task.Delay(250);
+        await Capture(Path.Combine(directory, "dark-minimum-options.png"));
         File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(new
         {
             passed = true,
