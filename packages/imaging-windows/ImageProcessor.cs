@@ -109,7 +109,8 @@ public sealed class ImageProcessor : IImageProcessor
         var content = settings.PreparedSize(info.Size);
         var layout = settings.Layout(info.Size);
         long sourcePixels = checked(info.Size.Width * info.Size.Height), pixels = checked(layout.Width * layout.Height);
-        if (layout.Width > int.MaxValue || layout.Height > int.MaxValue || checked((2 * sourcePixels + pixels) * (info.BitsPerComponent == 16 ? 8 : 4)) > MaximumWorkingBytes)
+        long resizeBytes = content == info.Size ? 0 : checked(content.Width * info.Size.Height * 3 * sizeof(float));
+        if (layout.Width > int.MaxValue || layout.Height > int.MaxValue || checked((2 * sourcePixels + pixels) * (info.BitsPerComponent == 16 ? 8 : 4) + resizeBytes) > MaximumWorkingBytes)
             throw new ImageException("allocationError");
         string temp = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(output))!, ".bordermuse-" + Guid.NewGuid() + ".tmp");
         try
@@ -251,38 +252,72 @@ public sealed class ImageProcessor : IImageProcessor
         bitmap.Freeze();
         return (bitmap, contexts);
     }
-    // Separable bilinear filtering preserves 16-bit samples and exact prepared dimensions.
-    // Filter/color parity is validated independently of geometry; encoded bytes may differ from Apple.
+    // Scale the Lanczos-3 kernel for reduction so fine detail is averaged rather
+    // than aliased. Float intermediates retain 16-bit sample precision.
+    private readonly record struct Tap(int Index, float Weight);
+    private static Tap[][] Contributions(int source, int destination)
+    {
+        var result = new Tap[destination][];
+        double scale = Math.Max(1, (double)source / destination), support = 3 * scale;
+        static double Kernel(double x)
+        {
+            x = Math.Abs(x);
+            if (x < 1e-12) return 1;
+            if (x >= 3) return 0;
+            double angle = Math.PI * x;
+            return Math.Sin(angle) * Math.Sin(angle / 3) / (angle * angle / 3);
+        }
+        for (int x = 0; x < destination; x++)
+        {
+            if (source == destination) { result[x] = [new Tap(x, 1)]; continue; }
+            double center = (x + 0.5) * source / destination - 0.5;
+            int left = (int)Math.Ceiling(center - support), right = (int)Math.Floor(center + support);
+            var weights = new List<(int Index, double Weight)>(); double total = 0;
+            for (int sample = left; sample <= right; sample++)
+            {
+                double weight = Kernel((sample - center) / scale);
+                if (Math.Abs(weight) < 1e-12) continue;
+                weights.Add((Math.Clamp(sample, 0, source - 1), weight)); total += weight;
+            }
+            result[x] = weights.Select(t => new Tap(t.Index, (float)(t.Weight / total))).ToArray();
+        }
+        return result;
+    }
     private static byte[] Resize(byte[] input, int sw, int sh, int dw, int dh, int depth, CancellationToken token)
     {
         int bytes = depth / 8, bpp = 3 * bytes;
-        var output = new byte[checked(dw * dh * bpp)];
-        int Sample(int x, int y, int c)
+        var horizontal = Contributions(sw, dw); var vertical = Contributions(sh, dh);
+        var intermediate = new float[checked(dw * sh * 3)];
+        for (int y = 0; y < sh; y++)
         {
-            int i = (y * sw + x) * bpp + c * bytes;
-            return bytes == 1 ? input[i] : BinaryPrimitives.ReadUInt16LittleEndian(input.AsSpan(i, 2));
+            token.ThrowIfCancellationRequested();
+            for (int x = 0; x < dw; x++)
+                for (int c = 0; c < 3; c++)
+                {
+                    float value = 0;
+                    foreach (var tap in horizontal[x])
+                    {
+                        int index = (y * sw + tap.Index) * bpp + c * bytes;
+                        int sample = bytes == 1 ? input[index] : BinaryPrimitives.ReadUInt16LittleEndian(input.AsSpan(index, 2));
+                        value += sample * tap.Weight;
+                    }
+                    intermediate[(y * dw + x) * 3 + c] = value;
+                }
         }
+        var output = new byte[checked(dw * dh * bpp)];
         for (int y = 0; y < dh; y++)
         {
             token.ThrowIfCancellationRequested();
-            double sy = Math.Clamp((y + 0.5) * sh / dh - 0.5, 0, sh - 1);
-            int y0 = (int)sy, y1 = Math.Min(y0 + 1, sh - 1);
-            double fy = sy - y0;
             for (int x = 0; x < dw; x++)
-            {
-                double sx = Math.Clamp((x + 0.5) * sw / dw - 0.5, 0, sw - 1);
-                int x0 = (int)sx, x1 = Math.Min(x0 + 1, sw - 1);
-                double fx = sx - x0;
                 for (int c = 0; c < 3; c++)
                 {
-                    int value = (int)Math.Round((Sample(x0, y0, c) * (1 - fx) + Sample(x1, y0, c) * fx) * (1 - fy) + (Sample(x0, y1, c) * (1 - fx) + Sample(x1, y1, c) * fx) * fy);
-                    int i = (y * dw + x) * bpp + c * bytes;
-                    if (bytes == 1)
-                        output[i] = (byte)value;
-                    else
-                        BinaryPrimitives.WriteUInt16LittleEndian(output.AsSpan(i, 2), (ushort)value);
+                    float value = 0;
+                    foreach (var tap in vertical[y]) value += intermediate[(tap.Index * dw + x) * 3 + c] * tap.Weight;
+                    int sample = Math.Clamp((int)Math.Round(value), 0, bytes == 1 ? 255 : 65535);
+                    int index = (y * dw + x) * bpp + c * bytes;
+                    if (bytes == 1) output[index] = (byte)sample;
+                    else BinaryPrimitives.WriteUInt16LittleEndian(output.AsSpan(index, 2), (ushort)sample);
                 }
-            }
         }
         return output;
     }

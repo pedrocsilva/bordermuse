@@ -137,6 +137,31 @@ public sealed class ImageTests : IDisposable
         Assert.Equal(original, File.ReadAllBytes(input));
         Assert.Empty(Directory.GetFiles(root, ".bordermuse-*"));
     }
+    [Theory]
+    [InlineData(8)]
+    [InlineData(16)]
+    public void ReductionSuppressesFinePatternAliasingWithoutLosingDepth(int bits)
+    {
+        const int side = 1024;
+        int bytes = bits / 8, stride = side * 3 * bytes;
+        byte[] pixels = new byte[stride * side];
+        for (int y = 0; y < side; y++)
+            for (int x = 0; x < side; x++)
+                if ((x + y) % 2 != 0) Array.Fill(pixels, (byte)255, y * stride + x * 3 * bytes, 3 * bytes);
+        var bitmap = BitmapSource.Create(side, side, 96, 96, bits == 16 ? PixelFormats.Rgb48 : PixelFormats.Rgb24, null, pixels, stride);
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        string input = Path.Combine(root, "checker.png"), output = Path.Combine(root, "reduced.png");
+        using (var file = File.Create(input)) encoder.Save(file);
+        var info = processor.Inspect(input);
+        processor.Export(input, output, new BorderSettings { Thickness = 0, ReduceSize = true, LongEdge = 31 }, info.Version, default);
+        Assert.Equal(bits, processor.Inspect(output).BitsPerComponent);
+        var frame = new FormatConvertedBitmap(Read(output), PixelFormats.Rgb48, null, 0);
+        byte[] reduced = new byte[31 * 31 * 6]; frame.CopyPixels(reduced, 31 * 6, 0);
+        for (int y = 5; y < 26; y++)
+            for (int x = 5; x < 26; x++)
+                for (int c = 0; c < 3; c++)
+                    Assert.InRange(System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(reduced.AsSpan((y * 31 + x) * 6 + c * 2, 2)), 32255, 33280);
+    }
     [Fact]
     public void NoOpCopiesBytesAndFailuresNeverOverwrite()
     {
