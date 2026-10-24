@@ -297,6 +297,12 @@
       "platforms": [
         "windows"
       ]
+    },
+    "helpMenu": {
+      "text": "Help",
+      "platforms": [
+        "windows"
+      ]
     }
   }
 }

@@ -25,7 +25,7 @@ public sealed partial class MainWindow : Window
 {
     private readonly ImageProcessor processor = new();
     private readonly PhotoSession session;
-    private readonly Grid root = new() { Language = "en-US" };
+    private readonly Grid root = new() { Language = "en-US", KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden };
     private readonly Grid stage = new();
     private readonly Border paper = new() { Background = new SolidColorBrush(Colors.White), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private readonly Canvas photoCanvas = new();
@@ -252,7 +252,7 @@ public sealed partial class MainWindow : Window
         file.Items.Add(Add("clear", () => { session.Clear(); return Task.CompletedTask; }));
         file.Items.Add(new MenuFlyoutSeparator());
         file.Items.Add(Add("quit", () => { Close(); return Task.CompletedTask; }));
-        var help = new MenuBarItem() { Title = Strings.Text("about") };
+        var help = new MenuBarItem() { Title = Strings.Text("helpMenu") };
         var about = Add("about", async () => await Dialog(Strings.Text("appName"), Text(Strings.Text("aboutVersion"), 14), "done"));
         help.Items.Add(about);
         menu.Items.Add(help);

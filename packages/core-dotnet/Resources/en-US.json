@@ -102,5 +102,6 @@
   "aboutVersion": "Border Muse 0.1.0 — Windows development build",
   "more": "More",
   "importError": "This photo could not be opened. Check that it is available and try again.",
-  "cliHelp": "Usage: bordermuse --input PATH --output PATH --border-percent 0-50 --aspect-ratio original|W:H"
+  "cliHelp": "Usage: bordermuse --input PATH --output PATH --border-percent 0-50 --aspect-ratio original|W:H",
+  "helpMenu": "Help"
 }
