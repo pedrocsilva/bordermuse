@@ -45,8 +45,8 @@ public sealed partial class MainWindow : Window
     private readonly CheckBox reduce = new() { Content = Strings.Text("reduceSize") }, metadata = new() { Content = Strings.Text("metadata") };
     private readonly ProgressBar progress = new() { Minimum = 0, Maximum = 1 };
     private readonly TextBlock progressLabel = Text("", 12), sizeSummary = Text("", 12), metadataSummary = Text("", 12);
-    private readonly StackPanel progressPanel = new() { Spacing = 8 }, inspectorFields = new() { Spacing = 14 };
-    private readonly TextBlock resizeHelp = Text(Strings.Text("sizeHelp"), 12), formatExplanation = Text(Strings.Text("formatHelp"), 12);
+    private readonly StackPanel progressPanel = new() { Spacing = 8 }, inspectorFields = new() { Spacing = 10 };
+    private readonly TextBlock resizeHelp = Text(Strings.Text("sizeHelp"), 12);
     private readonly ScrollViewer inspectorScroll = new() { HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     private readonly Grid longEdgeRow = new();
     private readonly Expander options = new() { Header = Strings.Text("exportOptions"), HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
@@ -324,7 +324,7 @@ public sealed partial class MainWindow : Window
         settings.Children.Add(Row(Text(Strings.Text("quality"), 14), quality));
         settings.Children.Add(metadata);
         settings.Children.Add(Text(Strings.Text("metadataHelp"), 12));
-        settings.Children.Add(formatExplanation);
+
         options.Content = settings;
         inspectorFields.Children.Add(options);
         reduce.Checked += (_, _) => ApplySettings();
@@ -352,6 +352,7 @@ public sealed partial class MainWindow : Window
         export.Click += async (_, _) => await ChooseExport();
         footer.Children.Add(export);
         Id(export, "exportButton");
+        AutomationProperties.SetHelpText(export, Strings.Text("formatHelp"));
         Grid.SetRow(footer, 1);
         inspector.Children.Add(footer);
         return inspector;

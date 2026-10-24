@@ -63,9 +63,9 @@ public sealed partial class MainWindow
         options.IsExpanded = true;
         await Task.Delay(300);
         await Capture(Path.Combine(directory, "light-expanded-options.png"));
-        var optionBounds = formatExplanation.TransformToVisual(inspectorScroll).TransformBounds(new global::Windows.Foundation.Rect(0, 0, formatExplanation.ActualWidth, formatExplanation.ActualHeight));
+        var optionBounds = options.TransformToVisual(inspectorScroll).TransformBounds(new global::Windows.Foundation.Rect(0, 0, options.ActualWidth, options.ActualHeight));
         if (optionBounds.Bottom > inspectorScroll.ViewportHeight + 1)
-            throw new InvalidOperationException("Expanded export settings do not fit at the normal window size.");
+            throw new InvalidOperationException($"Expanded export settings end at {optionBounds.Bottom}, beyond viewport {inspectorScroll.ViewportHeight}.");
         root.RequestedTheme = ElementTheme.Dark;
         AppWindow.Resize(new global::Windows.Graphics.SizeInt32(980, 680));
         options.IsExpanded = true;
