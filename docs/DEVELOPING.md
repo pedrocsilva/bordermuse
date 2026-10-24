@@ -52,6 +52,9 @@ CI also generates synthetic sRGB/P3 and custom-XMP inputs on macOS, then runs
 `BORDERMUSE_COLOR_FIXTURES` to that folder for the color tests. The opt-in
 `scripts/windows/test-ui.ps1` harness uses an isolated preset store and captures
 the actual workspace in light/dark mode; it does not exercise assistive technology.
+On a disposable Windows desktop, `BORDERMUSE_SMOKE_CONTRAST=1` also toggles the
+system contrast setting, checks the native theme brushes and restores the setting
+without saving it to the user profile. The Windows CI job enables this option.
 
 The Windows App SDK and .NET runtime are included in the self-contained app.
 Run `BorderMuse.exe` from the complete published folder. Development ZIPs are

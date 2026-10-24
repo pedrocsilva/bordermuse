@@ -72,6 +72,8 @@ jobs:
       - name: Record package revision and checksums
         run: python scripts/windows/package_manifest.py build/windows/win-x64 --commit $env:GITHUB_SHA
       - name: Native workspace smoke test and appearance captures
+        env:
+          BORDERMUSE_SMOKE_CONTRAST: '1'
         shell: pwsh
         run: ./scripts/windows/test-ui.ps1 -AppPath build/windows/win-x64/BorderMuse.exe -ReportDirectory build/qa/windows-ui
       - name: Verify package files after native launch

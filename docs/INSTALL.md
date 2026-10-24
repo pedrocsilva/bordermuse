@@ -38,7 +38,7 @@ The app includes its .NET and Windows App SDK runtimes and is unsigned.
 and bundled .NET versions; `SHA256SUMS.txt` lists the packaged file hashes.
 
 The automated workflow uses Windows x64. Narrator, real drag/drop and file panels,
-display scaling/high contrast, real-photo comparison and clean-machine installation
+display scaling/high contrast, visual photo review and clean-machine installation
 still need hands-on validation. See [Windows parity](WINDOWS_PARITY.md) before
 interpreting a development build as release-ready. Build from source with the
 [Windows development instructions](DEVELOPING.md#windows-development).

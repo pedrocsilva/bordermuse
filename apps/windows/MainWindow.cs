@@ -87,7 +87,7 @@ public sealed partial class MainWindow : Window
         foreach (var child in children) group.Children.Add(child);
         return group;
     }
-    private static Border Divider() => new() { Height = 1, Background = new SolidColorBrush(Colors.Gray), Opacity = .25, Margin = new Thickness(0, 4, 0, 4) };
+    private static Border Divider() => new() { Height = 1, Style = (Style)Application.Current.Resources["WorkspaceDividerStyle"], Margin = new Thickness(0, 4, 0, 4) };
     public MainWindow()
     {
         Title = Strings.Text("appName");
@@ -105,8 +105,10 @@ public sealed partial class MainWindow : Window
         AppWindow.Closing += Closing;
         Build();
         Content = root;
-        root.ActualThemeChanged += (_, _) => ApplyTheme();
-        ApplyTheme();
+        root.Style = (Style)Application.Current.Resources["WorkspaceStyle"];
+        stage.Style = (Style)Application.Current.Resources["PreviewStageStyle"];
+        previewMessage.Style = (Style)Application.Current.Resources["PreviewMessageStyle"];
+        validation.Style = (Style)Application.Current.Resources["ValidationStyle"];
         SyncSettings();
         Refresh();
     }
@@ -371,15 +373,6 @@ public sealed partial class MainWindow : Window
         inspector.Children.Add(footer);
         return inspector;
     }
-    private void ApplyTheme()
-    {
-        bool dark = root.ActualTheme == ElementTheme.Dark;
-        root.Background = new SolidColorBrush(dark ? Color(0x282828) : Color(0xF6F6F6));
-        stage.Background = new SolidColorBrush(dark ? Color(0x212121) : Color(0xE7E7E7));
-        previewMessage.Foreground = new SolidColorBrush(dark ? Colors.White : Colors.Black);
-        validation.Foreground = new SolidColorBrush(dark ? Color(0xFFB4AB) : Color(0xB42318));
-    }
-    private static global::Windows.UI.Color Color(uint rgb) => global::Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
     private void ApplySettings()
     {
         if (updating)

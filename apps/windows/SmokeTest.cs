@@ -117,6 +117,8 @@ public sealed partial class MainWindow
             throw new InvalidOperationException("Validation explanation is outside the workspace.");
         root.RequestedTheme = ElementTheme.Light;
         await Capture(Path.Combine(directory, "light-minimum-validation.png"));
+        bool contrastValidated = Environment.GetEnvironmentVariable("BORDERMUSE_SMOKE_CONTRAST") == "1";
+        if (contrastValidated) await CheckContrastTheme(directory);
         root.RequestedTheme = ElementTheme.Dark;
         thickness.Text = "7";
         for (int attempt = 0; !session.InputsValid && attempt < 100; attempt++)
@@ -152,10 +154,49 @@ public sealed partial class MainWindow
             resizeChoicesValidated = true,
             partialFailureRetryValidated = true,
             liveCancellationValidated = true,
-            bundledRuntimesValidated = true
+            bundledRuntimesValidated = true,
+            contrastThemeSwitchValidated = contrastValidated
         }));
         allowClose = true;
         Close();
+    }
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct ContrastSettings { public uint Size, Flags; public IntPtr Scheme; }
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool ContrastParameters(uint action, uint size, ref ContrastSettings settings, uint update);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern uint GetSysColor(int index);
+    private async Task CheckContrastTheme(string directory)
+    {
+        // Enabled explicitly on disposable CI desktops. Restore the session setting
+        // in finally; do not persist it to the user's profile (no SPIF_UPDATEINIFILE).
+        var original = new ContrastSettings { Size = (uint)System.Runtime.InteropServices.Marshal.SizeOf<ContrastSettings>() };
+        if (!ContrastParameters(0x42, original.Size, ref original, 0))
+            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
+        var enabled = original; enabled.Flags |= 1;
+        var previousBackground = ((Microsoft.UI.Xaml.Media.SolidColorBrush)root.Background).Color;
+        try
+        {
+            if (!ContrastParameters(0x43, enabled.Size, ref enabled, 2))
+                throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
+            static global::Windows.UI.Color SystemColor(int index)
+            {
+                uint rgb = GetSysColor(index);
+                return global::Windows.UI.Color.FromArgb(255, (byte)rgb, (byte)(rgb >> 8), (byte)(rgb >> 16));
+            }
+            bool SameBrush(Microsoft.UI.Xaml.Media.Brush brush, int index) => brush is Microsoft.UI.Xaml.Media.SolidColorBrush solid && solid.Color == SystemColor(index);
+            await WaitFor(() => SameBrush(root.Background, 5) && SameBrush(stage.Background, 5) && SameBrush(validation.Foreground, 8) && SameBrush(previewMessage.Foreground, 8), "system contrast-theme brushes");
+            if (((Microsoft.UI.Xaml.Media.SolidColorBrush)paper.Background).Color != Microsoft.UI.Colors.White)
+                throw new InvalidOperationException("Contrast mode changed the exported-photo preview's white border.");
+            await Capture(Path.Combine(directory, "contrast-minimum-validation.png"));
+        }
+        finally
+        {
+            if (!ContrastParameters(0x43, original.Size, ref original, 2))
+                throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
+        }
+        await WaitFor(() => ((Microsoft.UI.Xaml.Media.SolidColorBrush)root.Background).Color == previousBackground, "contrast-theme restoration");
     }
     private async Task CheckExportRecoveryAndCancellation(string directory)
     {

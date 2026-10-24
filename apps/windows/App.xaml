@@ -5,6 +5,44 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#282828" />
+                    <SolidColorBrush x:Key="PreviewStageBrush" Color="#212121" />
+                    <SolidColorBrush x:Key="PreviewMessageBrush" Color="White" />
+                    <SolidColorBrush x:Key="ValidationBrush" Color="#FFB4AB" />
+                    <SolidColorBrush x:Key="WorkspaceDividerBrush" Color="#40808080" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#F6F6F6" />
+                    <SolidColorBrush x:Key="PreviewStageBrush" Color="#E7E7E7" />
+                    <SolidColorBrush x:Key="PreviewMessageBrush" Color="Black" />
+                    <SolidColorBrush x:Key="ValidationBrush" Color="#B42318" />
+                    <SolidColorBrush x:Key="WorkspaceDividerBrush" Color="#40808080" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="PreviewStageBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="PreviewMessageBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="ValidationBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="WorkspaceDividerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <Style x:Key="WorkspaceStyle" TargetType="Grid">
+                <Setter Property="Background" Value="{ThemeResource WorkspaceBackgroundBrush}" />
+            </Style>
+            <Style x:Key="PreviewStageStyle" TargetType="Grid">
+                <Setter Property="Background" Value="{ThemeResource PreviewStageBrush}" />
+            </Style>
+            <Style x:Key="PreviewMessageStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{ThemeResource PreviewMessageBrush}" />
+            </Style>
+            <Style x:Key="ValidationStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{ThemeResource ValidationBrush}" />
+            </Style>
+            <Style x:Key="WorkspaceDividerStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource WorkspaceDividerBrush}" />
+            </Style>
             <ResourceDictionary.MergedDictionaries>
                 <controls:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
