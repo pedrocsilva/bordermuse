@@ -15,10 +15,10 @@
 "metadataRemoved" = "Removed";
 "contentSize" = "Content: %ld × %ld px";
 "canvasSize" = "Canvas: %ld × %ld px";
-"addPhotos" = "Add Photos…";
-"export" = "Export %ld Photos…";
-"exportOne" = "Export Photo…";
-"exportMenu" = "Export Photos…";
+"addPhotos" = "Add Photos";
+"export" = "Export %ld Photos";
+"exportOne" = "Export Photo";
+"exportMenu" = "Export Photos";
 "emptyTitle" = "A little room for your photos.";
 "emptySubtitle" = "Drop photos here to frame them for export.";
 "formats" = "JPEG, PNG, and TIFF";
