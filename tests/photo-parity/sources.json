@@ -1,0 +1,29 @@
+{
+  "sources": [
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/e0/River_landscape_with_rocks_and_trees.jpg",
+      "sha256": "bde5ad5d830dfb5e0e35951ed3be6d638481df2f6749720208cd0670f46974d9",
+      "bytes": 3797220,
+      "file": "river.jpg",
+      "credit": "Mshuang2 \u2014 CC0 1.0",
+      "source": "https://commons.wikimedia.org/wiki/File:River_landscape_with_rocks_and_trees.jpg"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/recurser/exif-orientation-examples/219294e144531b0c01247913cb58b6f5531b5081/Landscape_6.jpg",
+      "sha256": "9b344e9f0c869d8637ea22e672df9451d8d3cc1d2d0b291af3b284e538e5f124",
+      "bytes": 352727,
+      "file": "Landscape_6.jpg",
+      "credit": "Dave Perrett \u2014 MIT",
+      "source": "https://github.com/recurser/exif-orientation-examples"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/recurser/exif-orientation-examples/219294e144531b0c01247913cb58b6f5531b5081/Portrait_8.jpg",
+      "sha256": "66b38ab2c7fbd6850d5a5d2aa953b144acd8226056ee5b7fa2355d4d90c015eb",
+      "bytes": 251978,
+      "file": "Portrait_8.jpg",
+      "credit": "Dave Perrett \u2014 MIT",
+      "source": "https://github.com/recurser/exif-orientation-examples"
+    }
+  ],
+  "mitLicenseUrl": "https://raw.githubusercontent.com/recurser/exif-orientation-examples/219294e144531b0c01247913cb58b6f5531b5081/LICENSE"
+}

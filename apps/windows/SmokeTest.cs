@@ -60,13 +60,15 @@ public sealed partial class MainWindow
         await session.ExportAsync(exports);
         if (!File.Exists(Path.Combine(exports, "synthetic-border-2.png")) || !File.ReadAllBytes(first).SequenceEqual(firstBytes) || !File.ReadAllBytes(input).SequenceEqual(original))
             throw new InvalidOperationException("Export overwrite/original protection failed.");
+        options.IsExpanded = true;
+        await WaitFor(() => photoSize.IsLoaded, "visible photo size controls");
         var sourceSize = session.Photos[0].Info.Size;
         photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == 2048);
         await WaitFor(() => session.Settings.ReduceSize && session.Settings.LongEdge == 2048, "2048 photo size");
         if (!session.Settings.ReduceSize || session.Settings.LongEdge != 2048 || session.Settings.PreparedSize(sourceSize) != sourceSize)
             throw new InvalidOperationException("The 2048 preset must retain smaller photos without enlargement.");
         photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == -1);
-        await WaitFor(() => longEdgeRow.Visibility == Visibility.Visible, "custom size editor");
+        await WaitFor(() => longEdgeRow.Visibility == Visibility.Visible && longEdge.IsLoaded, "custom size editor");
         longEdge.Text = "51";
         await WaitFor(() => session.Settings.LongEdge == 51 && session.InputsValid, "custom size application");
         if (session.Settings.PreparedSize(sourceSize) != new BorderMuse.Geometry.PixelSize(51, 34))
