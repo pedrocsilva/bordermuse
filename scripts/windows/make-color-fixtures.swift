@@ -24,6 +24,12 @@ for (profile, space) in [("sRGB", CGColorSpace.sRGB), ("P3", CGColorSpace.displa
         var error: Unmanaged<CFError>?
         precondition(CGImageMetadataRegisterNamespaceForPrefix(metadata, "https://example.invalid/bordermuse/qa/1.0/" as CFString, "bmqa" as CFString, &error))
         precondition(CGImageMetadataSetValueWithPath(metadata, nil, "bmqa:Marker" as CFString, "Synthetic BorderMuse metadata" as CFString))
+        for (namespace, prefix) in [("http://ns.adobe.com/tiff/1.0/", "tiff"), ("http://ns.adobe.com/exif/1.0/", "exif")] {
+            precondition(CGImageMetadataRegisterNamespaceForPrefix(metadata, namespace as CFString, prefix as CFString, &error))
+        }
+        for (path, value) in [("tiff:Orientation", 6), ("tiff:ImageWidth", 101), ("tiff:ImageLength", 67), ("exif:PixelXDimension", 101), ("exif:PixelYDimension", 67)] {
+            precondition(CGImageMetadataSetValueWithPath(metadata, nil, path as CFString, NSNumber(value: value)))
+        }
         let properties: [CFString: Any] = [
             kCGImagePropertyOrientation: 6,
             kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFMake: "QA Camera", kCGImagePropertyTIFFArtist: "QA Author"],

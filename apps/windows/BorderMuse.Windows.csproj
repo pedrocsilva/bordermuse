@@ -9,7 +9,6 @@
     <ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>Assets/AppIcon.ico</ApplicationIcon>
     <AssemblyName>BorderMuse</AssemblyName><RootNamespace>BorderMuse.Windows</RootNamespace>
     <Version>0.1.0</Version><FileVersion>0.1.0.2</FileVersion>
-    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" GeneratePathProperty="true" />

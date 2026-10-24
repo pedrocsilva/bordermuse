@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Text;
+using System.Xml.Linq;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using BorderMuse.Core;
@@ -66,6 +67,22 @@ public sealed class ColorTests
         }
         return false;
     }
+    private static string? XmpValue(BitmapMetadata metadata, string name, string format)
+    {
+        if (format != "png")
+            return metadata.GetQuery((format == "tiff" ? "/ifd/xmp/" : "/xmp/") + name)?.ToString();
+        for (int i = 0; metadata.ContainsQuery($"/[{i}]iTXt"); i++)
+        {
+            string block = $"/[{i}]iTXt";
+            if (metadata.GetQuery(block + "/Keyword") as string != "XML:com.adobe.xmp")
+                continue;
+            var xml = XDocument.Parse((string)metadata.GetQuery(block + "/TextEntry"));
+            string[] parts = name.Split(':');
+            XNamespace ns = parts[0] == "tiff" ? "http://ns.adobe.com/tiff/1.0/" : "http://ns.adobe.com/exif/1.0/";
+            return xml.Descendants(ns + parts[1]).FirstOrDefault()?.Value ?? xml.Descendants().Attributes(ns + parts[1]).FirstOrDefault()?.Value;
+        }
+        return null;
+    }
     private static byte[]? PngExif(string path)
     {
         byte[] data = File.ReadAllBytes(path);
@@ -118,6 +135,13 @@ public sealed class ColorTests
                     Assert.Equal(info.BitsPerComponent, exported.BitsPerComponent);
                     Assert.Equal(Profile(before), Profile(after));
                     Assert.Equal(keep, HasMarker(output));
+                    if (keep)
+                    {
+                        var tags = (BitmapMetadata)after.Metadata;
+                        Assert.Equal("1", XmpValue(tags, "tiff:Orientation", info.Format));
+                        Assert.Equal("135", XmpValue(tags, "tiff:ImageWidth", info.Format));
+                        Assert.Equal("107", XmpValue(tags, "exif:PixelYDimension", info.Format));
+                    }
                     if (filename.EndsWith(".png"))
                     {
                         Assert.NotNull(PngExif(input));

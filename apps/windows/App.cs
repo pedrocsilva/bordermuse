@@ -1,28 +1,11 @@
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.AppLifecycle;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 
 namespace BorderMuse.Windows;
 
-internal static class Program
-{
-    [STAThread]
-    public static void Main()
-    {
-        WinRT.ComWrappersSupport.InitializeComWrappers();
-        Application.Start(parameters =>
-        {
-            SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
-            try { _ = new App(); }
-            catch (Exception error) { App.RecordSmokeFailure(error.ToString()); throw; }
-        });
-    }
-}
-
-public sealed class App : Application
+public sealed partial class App : Application
 {
     private MainWindow? window;
     private AppInstance? instance;
@@ -36,11 +19,10 @@ public sealed class App : Application
     public App()
     {
         UnhandledException += (_, error) => RecordSmokeFailure(error.Message + Environment.NewLine + error.Exception);
+        InitializeComponent();
     }
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        Resources = new ResourceDictionary();
-        Resources.MergedDictionaries.Add(new XamlControlsResources());
         instance = AppInstance.FindOrRegisterForKey("BorderMuse.Windows");
         if (!instance.IsCurrent)
         {
