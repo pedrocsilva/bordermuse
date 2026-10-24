@@ -11,14 +11,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Fetch pinned public sources
         run: python3 scripts/qa/fetch-public-photos.py build/qa/photo-parity
-      - name: Render macOS reference exports
-        run: |
-          swift build --package-path apps/cli -c release
-          BM_CLI="$(swift build --package-path apps/cli -c release --show-bin-path)/bordermuse"
-          mkdir -p build/qa/photo-parity/macos
-          for BM_INPUT in build/qa/photo-parity/input/*.jpg; do
-            "$BM_CLI" --input "$BM_INPUT" --output "build/qa/photo-parity/macos/$(basename "$BM_INPUT")" --border-percent 10 --aspect-ratio original
-          done
+      - name: Render original and 2048-pixel macOS references
+        env:
+          BORDERMUSE_PHOTO_CORPUS: ${{ github.workspace }}/build/qa/photo-parity
+        run: swift test --package-path packages/imaging-apple -c release --filter PhotoParityTests
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: BorderMuse-public-photo-corpus

@@ -58,6 +58,15 @@ Run `BorderMuse.exe` from the complete published folder. Development ZIPs are
 unsigned and are not Windows releases. The Windows CI workflow runs native codec
 tests and uploads the self-contained folder for inspection.
 
+The opt-in **Public photo parity** workflow downloads three hash-pinned public
+photographs with their attribution/license, exports macOS references at original
+and 2048-pixel photo sizes, then compares Windows outputs with metadata kept and
+removed. It records dimensions, original protection, ICC/selected camera fields,
+mean RGB difference and PSNR for these samples. Run it with
+`gh workflow run photo-parity.yml --ref main`. Photos and reports stay in ignored
+QA folders/short-lived artifacts, not Git. This does not establish calibrated
+display accuracy or broad camera/editor coverage.
+
 ## Verification boundaries
 
 - Root Swift/Python tests compare all 20 measured canvases and four margins;

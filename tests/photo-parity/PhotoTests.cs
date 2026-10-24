@@ -28,9 +28,12 @@ public sealed class PhotoTests
     }
     private static byte[]? Profile(BitmapFrame frame)
     {
-        if (frame.ColorContexts?.Count is not > 0) return null;
+        if (frame.ColorContexts?.Count is not > 0)
+            return null;
         using var input = frame.ColorContexts[0].OpenProfileStream();
-        using var data = new MemoryStream(); input.CopyTo(data); return data.ToArray();
+        using var data = new MemoryStream();
+        input.CopyTo(data);
+        return data.ToArray();
     }
     [Theory]
     [InlineData("river.jpg")]
@@ -39,42 +42,76 @@ public sealed class PhotoTests
     public void WindowsPhotoExportsAgreeWithMacDimensionsAndColor(string filename)
     {
         string root = Environment.GetEnvironmentVariable("BORDERMUSE_PHOTO_CORPUS") ?? throw new InvalidOperationException("Run the Public photo parity workflow or set BORDERMUSE_PHOTO_CORPUS.");
-        string input = Path.Combine(root, "input", filename), reference = Path.Combine(root, "macos", filename);
-        var processor = new ImageProcessor(); var info = processor.Inspect(input);
-        var before = Read(input); var mac = Read(reference); var expected = Srgb(mac);
+        string input = Path.Combine(root, "input", filename);
+        var processor = new ImageProcessor();
+        var info = processor.Inspect(input);
+        var before = Read(input);
         var runs = new List<object>();
-        foreach (bool keep in new[] { true, false })
+        foreach (int edge in new[] { 0, 2048 })
         {
-            string folder = Path.Combine(root, "windows", keep ? "kept" : "removed"); Directory.CreateDirectory(folder);
-            string output = Path.Combine(folder, filename);
-            var settings = new BorderSettings { Thickness = 10, KeepMetadata = keep };
-            processor.Export(input, output, settings, info.Version, default);
-            var result = processor.Inspect(output); var image = Read(output); var actual = Srgb(image);
-            var layout = settings.Layout(info.Size);
-            Assert.Equal(mac.PixelWidth, image.PixelWidth); Assert.Equal(mac.PixelHeight, image.PixelHeight);
-            Assert.Equal(layout.Width, image.PixelWidth); Assert.Equal(layout.Height, image.PixelHeight);
-            Assert.Equal(1, result.Orientation); Assert.Equal(info.BitsPerComponent, result.BitsPerComponent);
-            Assert.Equal(Profile(before), Profile(image));
-            double absolute = 0, squared = 0; long count = 0;
-            for (int y = 0; y < info.Size.Height; y++)
-                for (int x = 0; x < info.Size.Width; x++)
+            string size = edge == 0 ? "original" : "2048";
+            var mac = Read(Path.Combine(root, "macos", size, filename));
+            var expected = Srgb(mac);
+            foreach (bool keep in new[] { true, false })
+            {
+                string folder = Path.Combine(root, "windows", size, keep ? "kept" : "removed");
+                Directory.CreateDirectory(folder);
+                string output = Path.Combine(folder, filename);
+                var settings = new BorderSettings { Thickness = 10, KeepMetadata = keep, ReduceSize = edge != 0, LongEdge = edge == 0 ? 3000 : edge };
+                processor.Export(input, output, settings, info.Version, default);
+                var result = processor.Inspect(output);
+                var image = Read(output);
+                var actual = Srgb(image);
+                var layout = settings.Layout(info.Size);
+                Assert.Equal(mac.PixelWidth, image.PixelWidth);
+                Assert.Equal(mac.PixelHeight, image.PixelHeight);
+                Assert.Equal(layout.Width, image.PixelWidth);
+                Assert.Equal(layout.Height, image.PixelHeight);
+                Assert.Equal(1, result.Orientation);
+                Assert.Equal(info.BitsPerComponent, result.BitsPerComponent);
+                Assert.Equal(Profile(before), Profile(image));
+                double absolute = 0, squared = 0;
+                long count = 0;
+                var prepared = settings.PreparedSize(info.Size);
+                for (int y = 0; y < prepared.Height; y++)
+                    for (int x = 0; x < prepared.Width; x++)
+                    {
+                        int index = checked(((int)layout.Top + y) * image.PixelWidth + (int)layout.Left + x) * 4;
+                        for (int c = 0; c < 3; c++)
+                        {
+                            int difference = actual[index + c] - expected[index + c];
+                            absolute += Math.Abs(difference);
+                            squared += difference * difference;
+                            count++;
+                        }
+                    }
+                double mean = absolute / count;
+                double? psnr = squared == 0 ? null : 10 * Math.Log10(255 * 255 / (squared / count));
+                // A regression bound for these named examples, not a universal color-quality claim.
+                Assert.True(mean <= 5, $"{filename}: mean RGB difference from macOS is {mean:F3}.");
+                Assert.True(psnr is null || psnr >= 30, $"{filename}: PSNR against macOS is {psnr:F2} dB.");
+                foreach (int corner in new[] { 0, image.PixelWidth - 1, (image.PixelHeight - 1) * image.PixelWidth, image.PixelWidth * image.PixelHeight - 1 })
+                    for (int c = 0; c < 3; c++)
+                        Assert.InRange(actual[corner * 4 + c], (byte)250, (byte)255);
+                var sourceTags = before.Metadata as BitmapMetadata;
+                var tags = image.Metadata as BitmapMetadata;
+                foreach (string query in new[] { "/app1/ifd/{ushort=271}", "/app1/ifd/{ushort=272}", "/app1/ifd/exif/{ushort=36867}" })
+                    Assert.Equal(keep ? sourceTags?.GetQuery(query)?.ToString() : null, tags?.GetQuery(query)?.ToString());
+                info.Version.Validate(input);
+                runs.Add(new
                 {
-                    int index = checked(((int)layout.Top + y) * image.PixelWidth + (int)layout.Left + x) * 4;
-                    for (int c = 0; c < 3; c++) { int difference = actual[index + c] - expected[index + c]; absolute += Math.Abs(difference); squared += difference * difference; count++; }
-                }
-            double mean = absolute / count; double? psnr = squared == 0 ? null : 10 * Math.Log10(255 * 255 / (squared / count));
-            // A regression bound for these named examples, not a universal color-quality claim.
-            Assert.True(mean <= 5, $"{filename}: mean RGB difference from macOS is {mean:F3}.");
-            Assert.True(psnr is null || psnr >= 30, $"{filename}: PSNR against macOS is {psnr:F2} dB.");
-            foreach (int corner in new[] { 0, image.PixelWidth - 1, (image.PixelHeight - 1) * image.PixelWidth, image.PixelWidth * image.PixelHeight - 1 })
-                for (int c = 0; c < 3; c++) Assert.InRange(actual[corner * 4 + c], (byte)250, (byte)255);
-            var sourceTags = before.Metadata as BitmapMetadata; var tags = image.Metadata as BitmapMetadata;
-            foreach (string query in new[] { "/app1/ifd/{ushort=271}", "/app1/ifd/{ushort=272}", "/app1/ifd/exif/{ushort=36867}" })
-                Assert.Equal(keep ? sourceTags?.GetQuery(query)?.ToString() : null, tags?.GetQuery(query)?.ToString());
-            info.Version.Validate(input);
-            runs.Add(new { keepMetadata = keep, width = image.PixelWidth, height = image.PixelHeight, meanAbsoluteRgbDifference = mean, psnrDB = psnr, originalPreserved = true });
+                    photoSize = size,
+                    keepMetadata = keep,
+                    width = image.PixelWidth,
+                    height = image.PixelHeight,
+                    meanAbsoluteRgbDifference = mean,
+                    psnrDB = psnr,
+                    originalPreserved = true
+                });
+            }
         }
-        string reports = Path.Combine(root, "reports"); Directory.CreateDirectory(reports);
+        string reports = Path.Combine(root, "reports");
+        Directory.CreateDirectory(reports);
         File.WriteAllText(Path.Combine(reports, filename + ".json"), JsonSerializer.Serialize(runs, new JsonSerializerOptions { WriteIndented = true }));
     }
 }
