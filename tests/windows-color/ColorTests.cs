@@ -72,7 +72,8 @@ public sealed class ColorTests
         for (int i = 8; i + 12 <= data.Length;)
         {
             int count = checked((int)BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(i, 4)));
-            if (Encoding.ASCII.GetString(data, i + 4, 4) == "eXIf") return data.AsSpan(i + 8, count).ToArray();
+            if (Encoding.ASCII.GetString(data, i + 4, 4) == "eXIf")
+                return data.AsSpan(i + 8, count).ToArray();
             i = checked(i + 12 + count);
         }
         return null;

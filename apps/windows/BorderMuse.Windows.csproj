@@ -22,7 +22,7 @@
   </ItemGroup>
   <Target Name="CopyRuntimeNotices" AfterTargets="Publish">
     <ItemGroup>
-      <RuntimeLegal Include="@(ResolvedRuntimePack->'%(PackageDirectory)/LICENSE*');@(ResolvedRuntimePack->'%(PackageDirectory)/THIRD*')" />
+      <RuntimeLegal Include="%(ResolvedRuntimePack.PackageDirectory)/LICENSE*;%(ResolvedRuntimePack.PackageDirectory)/THIRD*" />
     </ItemGroup>
     <Copy SourceFiles="@(RuntimeLegal)" DestinationFolder="$(PublishDir)Legal/dotnet" SkipUnchangedFiles="true" />
   </Target>

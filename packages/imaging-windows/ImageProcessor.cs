@@ -36,13 +36,13 @@ public sealed class ImageProcessor : IImageProcessor
         }
         catch (NotSupportedException) { return 1; }
     }
-    private static ImageInfo Info(BitmapDecoder decoder, FileVersion version)
+    private static ImageInfo Info(BitmapDecoder decoder, FileVersion version, Stream stream)
     {
         string format = Format(decoder);
         if (decoder.Frames.Count != 1)
             throw new ImageException("unsupportedError");
         var frame = decoder.Frames[0];
-        int orientation = Orientation(frame.Metadata as BitmapMetadata, format);
+        int orientation = format == "png" ? PngExif.Orientation(PngExif.Read(stream)) : Orientation(frame.Metadata as BitmapMetadata, format);
         if (orientation is < 1 or > 8)
             throw new ImageException("unsupportedError");
         // A gain-map XMP flag must not silently become an SDR export.
@@ -65,7 +65,7 @@ public sealed class ImageProcessor : IImageProcessor
         {
             var version = FileVersion.Read(path);
             using var stream = Open(path);
-            var info = Info(Decoder(stream), version);
+            var info = Info(Decoder(stream), version, stream);
             version.Validate(path);
             return info;
         }
@@ -83,7 +83,7 @@ public sealed class ImageProcessor : IImageProcessor
             throw new ImageException("sourceChangedError");
         using var stream = Open(path);
         var decoder = Decoder(stream);
-        var info = Info(decoder, version);
+        var info = Info(decoder, version, stream);
         var size = new BorderSettings { ReduceSize = true, LongEdge = Math.Min(maximumEdge, 100_000) }.PreparedSize(info.Size);
         var (image, contexts) = Render(decoder.Frames[0], info, size, new CanvasLayout(size.Width, size.Height, 0, 0, 0, 0), CancellationToken.None);
         BitmapSource display = new FormatConvertedBitmap(image, PixelFormats.Bgr32, null, 0);
@@ -133,9 +133,16 @@ public sealed class ImageProcessor : IImageProcessor
                     _ => throw new ImageException("unsupportedError")
                 };
                 encoder.Frames.Add(BitmapFrame.Create(rendered, null, metadata, contexts));
-                using var destination = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-                encoder.Save(destination);
-                destination.Flush(true);
+                using (var destination = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    encoder.Save(destination);
+                    destination.Flush(true);
+                }
+                if (info.Format == "png")
+                {
+                    var exif = settings.KeepMetadata ? PngExif.Read(source) : null;
+                    PngExif.Replace(temp, exif is null ? null : PngExif.Normalize(exif, (int)layout.Width, (int)layout.Height));
+                }
             }
             cancellationToken.ThrowIfCancellationRequested();
             expected.Validate(input);
