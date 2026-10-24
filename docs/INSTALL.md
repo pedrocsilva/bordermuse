@@ -34,6 +34,8 @@ and download the `BorderMuse-windows-development-x64` artifact from a successful
 Extract the complete ZIP to a folder and run `BorderMuse.exe` there. Keep the
 runtime files and `Legal` folder together; the executable alone is insufficient.
 The app includes its .NET and Windows App SDK runtimes and is unsigned.
+`BorderMuse-build.json` identifies the source commit, app version, architecture
+and bundled .NET versions; `SHA256SUMS.txt` lists the packaged file hashes.
 
 The automated workflow uses Windows x64. Narrator, real drag/drop and file panels,
 display scaling/high contrast, real-photo comparison and clean-machine installation
