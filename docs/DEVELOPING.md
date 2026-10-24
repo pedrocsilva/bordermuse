@@ -80,8 +80,8 @@ Manual and independent installation checks are tracked in [the plan](PLAN.md).
 ## App and artwork conventions
 
 macOS strings live in `en-US.lproj/Localizable.strings`; Windows strings live in
-`packages/core-dotnet/Resources/en-US.json`. Both use US English. Presets use the
-app's Application Support directory under `BorderMuse/presets-v1.json`.
+`packages/core-dotnet/Resources/en-US.json`. Both use US English. Presets use
+`BorderMuse/presets-v1.json` in macOS Application Support or the Windows roaming AppData folder.
 Use native macOS controls and system typography; UI colors are defined in
 `apps/macos/BorderMuse/Workspace/WorkspaceStyle.swift`. Keep preview appearance
 separate from export fill. Brand artwork and icon generation are in

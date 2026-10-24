@@ -53,3 +53,7 @@ passed on revision `7ef8d86` on October 24, 2026:
 [The matching regression run](https://github.com/pedrocsilva/bordermuse/actions/runs/40102618085)
 passed Python, portable Swift, and macOS app/renderer checks on Apple silicon and
 Intel. These results cover the named revision; manual release gates above remain open.
+
+[Windows run 40114927158](https://github.com/pedrocsilva/bordermuse/actions/runs/40114927158)
+also passed at `0f65581`, adding minimum-height validation bounds checks and
+captures of visible validation in both themes plus expanded export options.
