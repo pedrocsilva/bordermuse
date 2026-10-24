@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Text;
+using System.IO.Compression;
 using BorderMuse.Core;
 
 namespace BorderMuse.Imaging.Windows;
@@ -157,10 +158,10 @@ internal static class PngExif
                 yield break;
         }
     }
-    private static uint Crc(byte[] data)
+    private static uint Crc(byte[] data, string type = "eXIf")
     {
         uint crc = uint.MaxValue;
-        foreach (byte value in Encoding.ASCII.GetBytes("eXIf").Concat(data))
+        foreach (byte value in Encoding.ASCII.GetBytes(type).Concat(data))
         {
             crc ^= value;
             for (int i = 0; i < 8; i++)
@@ -168,7 +169,18 @@ internal static class PngExif
         }
         return ~crc;
     }
-    internal static void Replace(string path, byte[]? data)
+    private static void WriteChunk(Stream output, string type, byte[] data)
+    {
+        byte[] header = new byte[8];
+        BinaryPrimitives.WriteUInt32BigEndian(header, (uint)data.Length);
+        Encoding.ASCII.GetBytes(type).CopyTo(header, 4);
+        output.Write(header);
+        output.Write(data);
+        byte[] crc = new byte[4];
+        BinaryPrimitives.WriteUInt32BigEndian(crc, Crc(data, type));
+        output.Write(crc);
+    }
+    internal static void Replace(string path, byte[]? data, int? width = null, int? height = null)
     {
         string temporary = path + ".metadata";
         try
@@ -183,16 +195,52 @@ internal static class PngExif
                 {
                     if (chunk.Type == "eXIf")
                         continue;
+                    if (chunk.Type == "iTXt" && width is not null && height is not null)
+                    {
+                        if (chunk.Length > 16 * 1024 * 1024)
+                            throw new ImageException("unsupportedError");
+                        byte[] text = new byte[chunk.Length];
+                        input.ReadExactly(text);
+                        int keyword = Array.IndexOf(text, (byte)0);
+                        if (keyword >= 0 && Encoding.ASCII.GetString(text, 0, keyword) == "XML:com.adobe.xmp")
+                        {
+                            int start = keyword + 3;
+                            if (start >= text.Length || text[keyword + 1] > 1 || text[keyword + 2] != 0)
+                                throw new ImageException("unreadableError");
+                            start = Array.IndexOf(text, (byte)0, start) + 1;
+                            if (start <= 0 || start >= text.Length)
+                                throw new ImageException("unreadableError");
+                            start = Array.IndexOf(text, (byte)0, start) + 1;
+                            if (start <= 0 || start >= text.Length)
+                                throw new ImageException("unreadableError");
+                            string xml;
+                            using (var content = new MemoryStream(text, start, text.Length - start))
+                            using (var decoded = text[keyword + 1] == 1 ? (Stream)new ZLibStream(content, CompressionMode.Decompress) : content)
+                            using (var reader = new StreamReader(decoded, Encoding.UTF8))
+                            {
+                                var builder = new StringBuilder();
+                                char[] characters = new char[4096];
+                                int count;
+                                while ((count = reader.Read(characters, 0, characters.Length)) != 0)
+                                {
+                                    if (builder.Length + count > 16 * 1024 * 1024)
+                                        throw new ImageException("unsupportedError");
+                                    builder.Append(characters, 0, count);
+                                }
+                                xml = builder.ToString();
+                            }
+                            byte[] updated = Encoding.UTF8.GetBytes(XmpFraming.Normalize(xml, width.Value, height.Value));
+                            byte[] payload = new byte[start + updated.Length];
+                            text.AsSpan(0, start).CopyTo(payload);
+                            payload[keyword + 1] = 0;
+                            updated.CopyTo(payload, start);
+                            WriteChunk(output, "iTXt", payload);
+                            continue;
+                        }
+                    }
                     if (chunk.Type == "IEND" && data is not null)
                     {
-                        byte[] header = new byte[8];
-                        BinaryPrimitives.WriteUInt32BigEndian(header, (uint)data.Length);
-                        Encoding.ASCII.GetBytes("eXIf").CopyTo(header, 4);
-                        output.Write(header);
-                        output.Write(data);
-                        byte[] crc = new byte[4];
-                        BinaryPrimitives.WriteUInt32BigEndian(crc, Crc(data));
-                        output.Write(crc);
+                        WriteChunk(output, "eXIf", data);
                     }
                     input.Position = chunk.Start;
                     int remaining = checked(chunk.Length + 12);

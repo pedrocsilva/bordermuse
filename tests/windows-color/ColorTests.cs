@@ -67,19 +67,33 @@ public sealed class ColorTests
         }
         return false;
     }
-    private static string? XmpValue(BitmapMetadata metadata, string name, string format)
+    private static string? XmpValue(BitmapMetadata metadata, string name, string format, string path)
     {
         if (format != "png")
             return metadata.GetQuery((format == "tiff" ? "/ifd/xmp/" : "/xmp/") + name)?.ToString();
-        for (int i = 0; metadata.ContainsQuery($"/[{i}]iTXt"); i++)
+        byte[] data = File.ReadAllBytes(path);
+        for (int i = 8; i + 12 <= data.Length;)
         {
-            string block = $"/[{i}]iTXt";
-            if (metadata.GetQuery(block + "/Keyword") as string != "XML:com.adobe.xmp")
-                continue;
-            var xml = XDocument.Parse((string)metadata.GetQuery(block + "/TextEntry"));
-            string[] parts = name.Split(':');
-            XNamespace ns = parts[0] == "tiff" ? "http://ns.adobe.com/tiff/1.0/" : "http://ns.adobe.com/exif/1.0/";
-            return xml.Descendants(ns + parts[1]).FirstOrDefault()?.Value ?? xml.Descendants().Attributes(ns + parts[1]).FirstOrDefault()?.Value;
+            int count = checked((int)BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(i, 4)));
+            string type = Encoding.ASCII.GetString(data, i + 4, 4);
+            if (type == "iTXt")
+            {
+                byte[] chunk = data.AsSpan(i + 8, count).ToArray();
+                int end = Array.IndexOf(chunk, (byte)0);
+                if (Encoding.ASCII.GetString(chunk, 0, end) == "XML:com.adobe.xmp")
+                {
+                    int start = Array.IndexOf(chunk, (byte)0, end + 3) + 1;
+                    start = Array.IndexOf(chunk, (byte)0, start) + 1;
+                    using var bytes = new MemoryStream(chunk, start, chunk.Length - start);
+                    using var stream = chunk[end + 1] == 1 ? (Stream)new ZLibStream(bytes, CompressionMode.Decompress) : bytes;
+                    using var reader = new StreamReader(stream);
+                    var xml = XDocument.Parse(reader.ReadToEnd());
+                    string[] parts = name.Split(':');
+                    XNamespace ns = parts[0] == "tiff" ? "http://ns.adobe.com/tiff/1.0/" : "http://ns.adobe.com/exif/1.0/";
+                    return xml.Descendants(ns + parts[1]).FirstOrDefault()?.Value ?? xml.Descendants().Attributes(ns + parts[1]).FirstOrDefault()?.Value;
+                }
+            }
+            i = checked(i + count + 12);
         }
         return null;
     }
@@ -138,9 +152,9 @@ public sealed class ColorTests
                     if (keep)
                     {
                         var tags = (BitmapMetadata)after.Metadata;
-                        Assert.Equal("1", XmpValue(tags, "tiff:Orientation", info.Format));
-                        Assert.Equal("135", XmpValue(tags, "tiff:ImageWidth", info.Format));
-                        Assert.Equal("107", XmpValue(tags, "exif:PixelYDimension", info.Format));
+                        Assert.Equal("1", XmpValue(tags, "tiff:Orientation", info.Format, output));
+                        Assert.Equal("135", XmpValue(tags, "tiff:ImageWidth", info.Format, output));
+                        Assert.Equal("107", XmpValue(tags, "exif:PixelYDimension", info.Format, output));
                     }
                     if (filename.EndsWith(".png"))
                     {

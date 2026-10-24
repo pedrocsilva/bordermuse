@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.Collections.ObjectModel;
-using System.Xml.Linq;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using BorderMuse.Core;
@@ -142,7 +141,7 @@ public sealed class ImageProcessor : IImageProcessor
                 if (info.Format == "png")
                 {
                     var exif = settings.KeepMetadata ? PngExif.Read(source) : null;
-                    PngExif.Replace(temp, exif is null ? null : PngExif.Normalize(exif, (int)layout.Width, (int)layout.Height));
+                    PngExif.Replace(temp, exif is null ? null : PngExif.Normalize(exif, (int)layout.Width, (int)layout.Height), (int)layout.Width, (int)layout.Height);
                 }
             }
             cancellationToken.ThrowIfCancellationRequested();
@@ -177,27 +176,6 @@ public sealed class ImageProcessor : IImageProcessor
             if (metadata.ContainsQuery(block + "/xmp:Thumbnails"))
                 metadata.RemoveQuery(block + "/xmp:Thumbnails");
         }
-        if (format == "png")
-            for (int i = 0; metadata.ContainsQuery($"/[{i}]iTXt"); i++)
-            {
-                string block = $"/[{i}]iTXt";
-                if (metadata.GetQuery(block + "/Keyword") as string != "XML:com.adobe.xmp" || metadata.GetQuery(block + "/TextEntry") is not string xml)
-                    continue;
-                var document = XDocument.Parse(xml, LoadOptions.PreserveWhitespace);
-                XNamespace tiff = "http://ns.adobe.com/tiff/1.0/", exif = "http://ns.adobe.com/exif/1.0/", xmp = "http://ns.adobe.com/xap/1.0/";
-                var replacements = new Dictionary<XName, int> { [tiff + "Orientation"] = 1, [tiff + "ImageWidth"] = width, [tiff + "ImageLength"] = height, [exif + "PixelXDimension"] = width, [exif + "PixelYDimension"] = height };
-                foreach (var element in document.Descendants().ToArray())
-                {
-                    if (replacements.TryGetValue(element.Name, out int value))
-                        element.Value = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    foreach (var attribute in element.Attributes())
-                        if (replacements.TryGetValue(attribute.Name, out value))
-                            attribute.Value = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    if (element.Name == xmp + "Thumbnails")
-                        element.Remove();
-                }
-                metadata.SetQuery(block + "/TextEntry", document.ToString(SaveOptions.DisableFormatting));
-            }
     }
     private static bool Rgb(ColorContext context)
     {

@@ -20,13 +20,13 @@ public sealed partial class MainWindow
         string input = Path.Combine(directory, "synthetic.png");
         byte[] pixels = new byte[101 * 67 * 3];
         for (int y = 0; y < 67; y++)
-        for (int x = 0; x < 101; x++)
-        {
-            int i = (y * 101 + x) * 3;
-            pixels[i] = (byte)(x < 50 ? 210 : 30);
-            pixels[i + 1] = (byte)(y < 33 ? 130 : 40);
-            pixels[i + 2] = 90;
-        }
+            for (int x = 0; x < 101; x++)
+            {
+                int i = (y * 101 + x) * 3;
+                pixels[i] = (byte)(x < 50 ? 210 : 30);
+                pixels[i + 1] = (byte)(y < 33 ? 130 : 40);
+                pixels[i + 2] = 90;
+            }
         var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(101, 67, 96, 96, System.Windows.Media.PixelFormats.Rgb24, null, pixels, 303);
         var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
         encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
@@ -64,6 +64,8 @@ public sealed partial class MainWindow
         AppWindow.Resize(new global::Windows.Graphics.SizeInt32(980, 680));
         options.IsExpanded = true;
         thickness.Text = "abc";
+        for (int attempt = 0; session.InputsValid && attempt < 100; attempt++)
+            await Task.Delay(25);
         Refresh();
         if (session.CanExport || export.IsEnabled || validation.Visibility != Visibility.Visible)
             throw new InvalidOperationException("Invalid draft did not block export.");
