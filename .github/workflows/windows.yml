@@ -30,6 +30,15 @@ jobs:
         run: dotnet run --project apps/cli-dotnet/bordermuse.csproj -c Release -- --help
       - name: Publish self-contained Windows app
         run: dotnet publish apps/windows/BorderMuse.Windows.csproj -c Release -p:Platform=x64 -r win-x64 -o build/windows/win-x64
+      - name: Native workspace smoke test and appearance captures
+        shell: pwsh
+        run: ./scripts/windows/test-ui.ps1 -AppPath build/windows/win-x64/BorderMuse.exe -ReportDirectory build/qa/windows-ui
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: BorderMuse-windows-qa
+          path: build/qa/windows-ui/
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: BorderMuse-windows-development-x64

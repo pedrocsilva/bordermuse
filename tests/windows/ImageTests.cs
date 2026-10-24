@@ -84,7 +84,7 @@ public sealed class ImageTests : IDisposable
         Assert.Equal(new PixelSize(layout.Width, layout.Height), actual.Size);
         Assert.Equal(1, actual.Orientation);
         // Independent source-coordinate expectations for the top-left content pixel.
-        var source = Read(input);
+        var source = new FormatConvertedBitmap(Read(input), PixelFormats.Rgb24, null, 0);
         byte[] original = new byte[100 * 80 * 3];
         source.CopyPixels(original, 300, 0);
         var (sx, sy) = orientation switch

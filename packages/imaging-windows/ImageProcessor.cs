@@ -86,9 +86,9 @@ public sealed class ImageProcessor : IImageProcessor
         var info = Info(decoder, version);
         var size = new BorderSettings { ReduceSize = true, LongEdge = Math.Min(maximumEdge, 100_000) }.PreparedSize(info.Size);
         var (image, contexts) = Render(decoder.Frames[0], info, size, new CanvasLayout(size.Width, size.Height, 0, 0, 0, 0), CancellationToken.None);
-        BitmapSource display = image;
+        BitmapSource display = new FormatConvertedBitmap(image, PixelFormats.Bgr32, null, 0);
         if (contexts?.Count > 0)
-            display = new ColorConvertedBitmap(image, contexts[0], new ColorContext(PixelFormats.Bgra32), PixelFormats.Bgra32);
+            display = new ColorConvertedBitmap(display, contexts[0], new ColorContext(PixelFormats.Bgr32), PixelFormats.Bgr32);
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(display));
         using var output = new MemoryStream();
@@ -175,8 +175,9 @@ public sealed class ImageProcessor : IImageProcessor
         BitmapSource source = frame;
         if (contexts?.Count > 0 && !Rgb(contexts[0]))
         {
-            var target = new ColorContext(workingFormat);
-            source = new ColorConvertedBitmap(frame, contexts[0], target, workingFormat);
+            var colorFormat = depth == 16 ? PixelFormats.Rgb48 : PixelFormats.Bgr32;
+            var target = new ColorContext(colorFormat);
+            source = new ColorConvertedBitmap(frame, contexts[0], target, colorFormat);
             contexts = new ReadOnlyCollection<ColorContext>([target]);
         }
         if (source.Format != workingFormat)

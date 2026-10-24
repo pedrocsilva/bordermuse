@@ -21,7 +21,7 @@ using Windows.System;
 
 namespace BorderMuse.Windows;
 
-public sealed class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
     private readonly ImageProcessor processor = new();
     private readonly PhotoSession session;
@@ -82,7 +82,9 @@ public sealed class MainWindow : Window
     public MainWindow()
     {
         Title = Strings.Text("appName");
-        session = new PhotoSession(processor, new PresetStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BorderMuse", "presets-v1.json")));
+        string? smokeDirectory = Environment.GetEnvironmentVariable("BORDERMUSE_SMOKE_DIR");
+        string presetPath = smokeDirectory is null ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BorderMuse", "presets-v1.json") : Path.Combine(smokeDirectory, "presets-v1.json");
+        session = new PhotoSession(processor, new PresetStore(presetPath));
         session.Changed += () => { if (Interlocked.Exchange(ref refreshQueued, 1) == 0) DispatcherQueue.TryEnqueue(() => { Interlocked.Exchange(ref refreshQueued, 0); Refresh(); }); };
         AppWindow.Resize(new global::Windows.Graphics.SizeInt32(1120, 800));
         if (AppWindow.Presenter is OverlappedPresenter presenter)

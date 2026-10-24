@@ -46,5 +46,15 @@ public sealed class App : Application
         });
         window.Activate();
         await window.ImportAsync(Environment.GetCommandLineArgs().Skip(1).Where(File.Exists));
+        if (Environment.GetEnvironmentVariable("BORDERMUSE_SMOKE_DIR") is { } smoke)
+        {
+            try { await window.SmokeAsync(smoke); }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(smoke);
+                File.WriteAllText(Path.Combine(smoke,"failure.txt"),error.ToString());
+                Environment.Exit(1);
+            }
+        }
     }
 }
