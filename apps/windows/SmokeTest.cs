@@ -129,6 +129,7 @@ public sealed partial class MainWindow
             await Task.Delay(50);
         if (session.Photos.Count != 2 || !session.Photos.Any(p => p.Path == activated))
             throw new InvalidOperationException("An ordinary second launch did not import its photo into the existing window.");
+        await CheckExportRecoveryAndCancellation(directory);
         File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(new
         {
             passed = true,
@@ -139,10 +140,69 @@ public sealed partial class MainWindow
             presetRestored = true,
             invalidDraftBlocked = true,
             redirectedFileImported = true,
-            resizeChoicesValidated = true
+            resizeChoicesValidated = true,
+            partialFailureRetryValidated = true,
+            liveCancellationValidated = true
         }));
         allowClose = true;
         Close();
+    }
+    private async Task CheckExportRecoveryAndCancellation(string directory)
+    {
+        // Simulate an external editor replacing this harness's synthetic second photo.
+        string edited = Path.Combine(directory, "activated photo.png");
+        byte[] replacement = Enumerable.Repeat((byte)180, 17 * 13 * 3).ToArray();
+        var image = System.Windows.Media.Imaging.BitmapSource.Create(17, 13, 96, 96, System.Windows.Media.PixelFormats.Rgb24, null, replacement, 17 * 3);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
+        using (var output = File.Create(edited)) encoder.Save(output);
+        string recovery = Path.Combine(directory, "recovery"); Directory.CreateDirectory(recovery);
+        await session.ExportAsync(recovery);
+        if (session.Result is not { Outputs.Count: 1, Issues.Count: 1 } || !session.Issues.Any(i => i.CanRetry))
+            throw new InvalidOperationException("A changed source did not produce a recoverable per-file error.");
+        string completed = session.Result.Outputs[0]; byte[] completedBytes = File.ReadAllBytes(completed);
+        await session.ExportAsync(recovery, true);
+        if (session.Result is not { Outputs.Count: 1, Issues.Count: 0 } || session.Issues.Any(i => i.CanRetry) || !File.ReadAllBytes(completed).SequenceEqual(completedBytes))
+            throw new InvalidOperationException("Retry failed to refresh the changed source or overwrote the completed export.");
+
+        string large = Path.Combine(directory, "large-synthetic.png");
+        const int width = 3000, height = 2000;
+        byte[] pixels = new byte[width * height * 6];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                for (int c = 0; c < 3; c++)
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(pixels.AsSpan((y * width + x) * 6 + c * 2, 2), (ushort)((x * 19 + y * 7 + c * 10001) % 65536));
+        var largeImage = System.Windows.Media.Imaging.BitmapSource.Create(width, height, 96, 96, System.Windows.Media.PixelFormats.Rgb48, null, pixels, width * 6);
+        var largeEncoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        largeEncoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(largeImage));
+        using (var output = File.Create(large)) largeEncoder.Save(output);
+        var batchPaths = new List<string> { large };
+        for (int i = 1; i < 8; i++)
+        {
+            string copy = Path.Combine(directory, "large-synthetic-" + i + ".png"); File.Copy(large, copy); batchPaths.Add(copy);
+        }
+        await session.ImportAsync(batchPaths);
+        var active = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        void Observe() { if (session.IsExporting && session.Progress.Completed >= 3) active.TrySetResult(); }
+        session.Changed += Observe;
+        string canceled = Path.Combine(directory, "cancellation"); Directory.CreateDirectory(canceled);
+        try
+        {
+            var exportTask = session.ExportAsync(canceled);
+            await active.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            await Task.Delay(100);
+            Refresh();
+            if (!session.IsExporting || options.IsEnabled || cancel.Visibility != Visibility.Visible)
+                throw new InvalidOperationException("The large batch did not expose a responsive cancellation state.");
+            var peer = new Microsoft.UI.Xaml.Automation.Peers.ButtonAutomationPeer(cancel);
+            ((Microsoft.UI.Xaml.Automation.Provider.IInvokeProvider)peer.GetPattern(Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Invoke)).Invoke();
+            await exportTask;
+            if (session.Result is not { Canceled: true } || session.Result.Outputs.Count < 2 || session.Result.Outputs.Count >= session.Photos.Count)
+                throw new InvalidOperationException("The native cancel action did not stop the running batch while preserving completed outputs.");
+            if (Directory.GetFiles(canceled, ".bordermuse-*").Length != 0 || session.Result.Outputs.Any(p => !File.Exists(p)))
+                throw new InvalidOperationException("Cancellation left temporary files or removed completed outputs.");
+        }
+        finally { session.Changed -= Observe; }
     }
     private static async Task WaitFor(Func<bool> ready, string description)
     {
