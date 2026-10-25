@@ -296,6 +296,8 @@ public sealed partial class MainWindow : Window
         inspectorFields.Children.Add(Group(presetHeading, Row(presets, more)));
         presets.SelectionChanged += (_, _) => { if (!updating && presets.SelectedItem is PresetChoice choice) { session.UsePreset(choice.Id); SyncSettings(); } };
         Id(presets, "presetPicker", Strings.Text("preset"));
+        ToolTipService.SetToolTip(presets, Strings.Text("mobileReferenceHelp"));
+        AutomationProperties.SetHelpText(presets, Strings.Text("mobileReferenceHelp"));
         ratios.ItemsSource = new[] { "original", "1:1", "5:4", "4:5", "3:2", "2:3", "16:9", "9:16", "2:1", "1:2" }.Select(r => new RatioChoice(r, r == "original" ? Strings.Text("original") : r)).ToArray();
         ratios.DisplayMemberPath = nameof(RatioChoice.Name);
         inspectorFields.Children.Add(Group(Text(Strings.Text("ratio"), 14), ratios));
@@ -460,19 +462,19 @@ public sealed partial class MainWindow : Window
         if (!ReferenceEquals(displayedPresets, session.Presets))
         {
             displayedPresets = session.Presets;
-            presets.ItemsSource = new[] { new PresetChoice(null, Strings.Text("custom")) }.Concat(session.Presets.Select(p => new PresetChoice(p.Id, p.Name))).ToArray();
+            presets.ItemsSource = new[] { new PresetChoice(null, Strings.Text("custom")), new PresetChoice(Preset.MobileReferenceId, Strings.Text("mobileReferencePreset")) }.Concat(session.Presets.Select(p => new PresetChoice(p.Id, p.Name))).ToArray();
             presets.DisplayMemberPath = nameof(PresetChoice.Name);
         }
         if (presets.SelectedItem is not PresetChoice selectedPreset || selectedPreset.Id != session.SelectedPreset)
             presets.SelectedItem = presets.Items.Cast<PresetChoice>().FirstOrDefault(p => p.Id == session.SelectedPreset);
-        deletePreset.IsEnabled = session.SelectedPreset is not null;
+        deletePreset.IsEnabled = session.CanDeleteSelectedPreset;
         export.Content = items.Count == 0 ? Strings.Text("exportMenu") : items.Count == 1 ? Strings.Text("exportOne") : Strings.Format("export", items.Count);
         export.IsEnabled = session.CanExport;
         export.Visibility = session.IsExporting ? Visibility.Collapsed : Visibility.Visible;
         add.IsEnabled = !session.IsExporting;
         foreach (var control in new Control[] { presets, ratios, thickness, slider, options })
             control.IsEnabled = !session.IsExporting;
-        deletePreset.IsEnabled = session.SelectedPreset is not null && !session.IsExporting;
+        deletePreset.IsEnabled = session.CanDeleteSelectedPreset && !session.IsExporting;
         save.IsEnabled = session.InputsValid && !session.IsExporting;
         progressPanel.Visibility = session.IsExporting ? Visibility.Visible : Visibility.Collapsed;
         progress.Value = (double)Math.Max(0, session.Progress.Completed - 1) / Math.Max(1, session.Progress.Total);

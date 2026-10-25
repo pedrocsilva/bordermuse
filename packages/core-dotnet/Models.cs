@@ -16,6 +16,8 @@ public sealed record BorderSettings
     public int LongEdge { get; init; } = 3000;
     public int Quality { get; init; } = 95;
     public bool KeepMetadata { get; init; } = true;
+    [JsonIgnore] public bool IsMobileReference => Ratio == "5:4" && Thickness == 10 && ReduceSize && LongEdge == 2048;
+    public BorderSettings ApplyingMobileReference() => this with { Ratio = "5:4", Thickness = 10, ReduceSize = true, LongEdge = 2048 };
     public void Validate()
     {
         if (Thickness is < 0 or > 50)
@@ -74,7 +76,10 @@ public interface IImageProcessor
     void Export(string input, string output, BorderSettings settings, FileVersion expected, CancellationToken cancellationToken);
 }
 
-public sealed record Preset(Guid Id, string Name, BorderSettings Settings);
+public sealed record Preset(Guid Id, string Name, BorderSettings Settings)
+{
+    public static readonly Guid MobileReferenceId = Guid.Parse("F09C703A-989B-4B4F-9FE9-7BD46CF14001");
+}
 public sealed class PresetStore(string path)
 {
     public string Path { get; } = path;

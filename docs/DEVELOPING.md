@@ -75,7 +75,12 @@ display accuracy or broad camera/editor coverage.
 - Root Swift/Python tests compare all 20 measured canvases and four margins;
   boundary checks cover arithmetic beyond the measured sample.
 - Apple adapter tests/verification generate synthetic images for orientation,
-  formats, depth, color, metadata, resizing and output protection.
+  formats, depth, color, metadata, resizing and output protection. Apple and Windows
+  native tests also run full-size synthetic baselines through 2048 px preparation
+  and rendering, measuring all 20 canonical canvases and every margin. The numeric
+  baseline manifest is `geometry/mobile-export-v1.json`; original photos are not
+  required. Independent policy tests cover smaller images and Original/Custom
+  settings without claiming those unmeasured Mobile behaviors match.
 - App tests cover sessions, export behavior and native presentation snapshots.
 - `bash scripts/macos/test-ui.sh` needs an unlocked desktop and Xcode automation
   permission. It does not replace manual VoiceOver and interaction review.

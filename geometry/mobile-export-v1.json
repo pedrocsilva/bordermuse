@@ -1,0 +1,34 @@
+{
+  "geometryContract": "bordermuse-geometry-v1",
+  "referencePlatform": "iOS",
+  "referenceLightroomVersion": "11.6.10",
+  "photoLongEdge": 2048,
+  "geometryCases": "conformance-v1.json",
+  "evidence": "Original full-size baselines paired with the unchanged 20 measured exports. Tests generate black images at these source dimensions; original photos are not bundled.",
+  "baselines": {
+    "16by9": {
+      "sourceFile": "16by9_borderless.jpg",
+      "sha256": "c5a616c0f07ddfd9ebb7416528725f256e211eed0e64a163064614a8d2c96e29",
+      "sourceWidth": 7008,
+      "sourceHeight": 3942,
+      "preparedWidth": 2048,
+      "preparedHeight": 1152
+    },
+    "1by1": {
+      "sourceFile": "1by1_borderless.jpg",
+      "sha256": "888cb8f151e7ad53ba1f60e042f6a010a10bbfd5e79d1003183bf38c480abd5f",
+      "sourceWidth": 4672,
+      "sourceHeight": 4672,
+      "preparedWidth": 2048,
+      "preparedHeight": 2048
+    },
+    "2by3": {
+      "sourceFile": "2by3_borderless.jpg",
+      "sha256": "8dbfe61fb8f02c777c072798a80414057f6530965789f33674121d86819025cf",
+      "sourceWidth": 3923,
+      "sourceHeight": 5886,
+      "preparedWidth": 1365,
+      "preparedHeight": 2048
+    }
+  }
+}

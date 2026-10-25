@@ -38,6 +38,20 @@ public sealed class GeometryTests
         Assert.Equal(new PixelSize(801, 1201), new BorderSettings { ReduceSize = true, LongEdge = 3000 }.PreparedSize(new PixelSize(801, 1201)));
     }
     [Fact]
+    public void OriginalCustomAndSmallerInputsAreIndependentOfMobileEvidence()
+    {
+        var reference = new BorderSettings().ApplyingMobileReference();
+        var small = new PixelSize(1001, 667);
+        Assert.Equal(small, reference.PreparedSize(small));
+        Assert.Equal(small, (reference with { ReduceSize = false }).PreparedSize(small));
+        Assert.Equal(new PixelSize(500, 333), (reference with { LongEdge = 500 }).PreparedSize(small));
+        var full = new PixelSize(3923, 5886);
+        Assert.Equal(full, (reference with { ReduceSize = false }).PreparedSize(full));
+        var prepared = reference.PreparedSize(full);
+        var original = reference with { Ratio = "original", Thickness = 7 };
+        Assert.Equal(CanvasLayout.Calculate(prepared, 7, new AspectRatio(prepared.Width, prepared.Height)), original.Layout(full));
+    }
+    [Fact]
     public void InvalidDefaultValuesAndOverflowFail()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new PixelSize(0, 10));

@@ -71,6 +71,14 @@ public sealed partial class MainWindow
             throw new InvalidOperationException("Export overwrite/original protection failed.");
         options.IsExpanded = true;
         await WaitFor(() => photoSize.IsLoaded, "visible photo size controls");
+        var previousQuality = session.Settings.Quality; var previousMetadata = session.Settings.KeepMetadata;
+        presets.SelectedItem = presets.Items.Cast<PresetChoice>().First(p => p.Id == BorderMuse.Core.Preset.MobileReferenceId);
+        await WaitFor(() => session.SelectedPreset == BorderMuse.Core.Preset.MobileReferenceId && session.Settings.IsMobileReference, "built-in Mobile reference preset");
+        Refresh();
+        if (deletePreset.IsEnabled || session.CanDeleteSelectedPreset || session.Settings.Quality != previousQuality || session.Settings.KeepMetadata != previousMetadata || photoSize.SelectedItem is not SizeChoice { LongEdge: 2048 })
+            throw new InvalidOperationException("Mobile reference changed encoding choices, allowed deletion or failed to synchronize photo size.");
+        await Capture(Path.Combine(directory, "light-mobile-reference.png"));
+        session.UsePreset(id); SyncSettings();
         var sourceSize = session.Photos[0].Info.Size;
         photoSize.SelectedItem = photoSize.Items.Cast<SizeChoice>().First(c => c.LongEdge == 2048);
         await WaitFor(() => session.Settings.ReduceSize && session.Settings.LongEdge == 2048, "2048 photo size");
@@ -152,6 +160,7 @@ public sealed partial class MainWindow
             invalidDraftBlocked = true,
             redirectedFileImported = true,
             resizeChoicesValidated = true,
+            mobileReferencePresetValidated = true,
             partialFailureRetryValidated = true,
             liveCancellationValidated = true,
             bundledRuntimesValidated = true,

@@ -68,6 +68,38 @@ resizing is separate. Measurements cover thickness 0/10/20 and explicit ratios
 other content resolutions, Android and other Mobile versions need further
 empirical checks. Mathematical tests at other sizes do not establish those claims.
 
+## Mobile reference export policy
+
+The built-in **Mobile reference** preset applies target 5:4, thickness 10 and a
+photo long edge up to 2048 px. It leaves JPEG quality and metadata policy as
+chosen by the user. It is read-only; Save creates a separate user preset.
+Changing its geometry switches the selection to Custom. Original and Custom
+photo sizes remain available outside this preset; the default stays Original.
+
+Preparation occurs before the geometry call. The 2048 px limit concerns the
+photo, not the final canvas. For the measured 3923 × 5886 portrait source,
+preparation produces 1365 × 2048. With thickness 10, the measured canvases are
+2815 × 2252 (5:4), 4505 × 2252 (2:1), and 3379 × 2252 (3:2).
+
+[Mobile export baselines](../geometry/mobile-export-v1.json) record the three
+original source dimensions and hashes, paired with the unchanged 20-case corpus.
+Apple and Windows renderer tests generate synthetic black images at those source
+sizes, reduce them, export borders, and measure the resulting canvas and all four
+margins against the existing observations. No personal photos are bundled or
+needed in CI. These tests protect the preparation/export path as well as the
+portable arithmetic.
+
+The preset is a reference to measured iOS 11.6.10 geometry, not a promise about
+all Mobile settings or future versions. Tests for smaller/odd images, Original
+ratio and other thicknesses validate Border Muse's own policies separately and
+must not be reported as new Lightroom observations.
+
+Further empirical captures should pair an untouched source with its Mobile
+export and record platform/version, ratio and thickness. Remaining gaps include
+the actual 16:9 → 3:2 thickness-10 case, Original ratio, other thickness values,
+photos smaller than 2048 and odd dimensions. Preserve the existing confirmed
+filename correction; a new capture must become a separate case.
+
 Version changes to output behavior explicitly and agree them before implementation.
 Renaming package or contract metadata does not change the formula. Preserve
 measured cases and test every port against the same corpus with zero pixel tolerance.

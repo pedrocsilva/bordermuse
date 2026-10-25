@@ -13,6 +13,7 @@ final class PhotoSession {
     var settings = BorderSettings()
     var presets: [Preset]
     var selectedPreset: UUID?
+    var canDeleteSelectedPreset: Bool { selectedPreset != nil && selectedPreset != Preset.mobileReferenceID }
     var settingsRevision = 0
     private(set) var invalidInputs: Set<NumericSetting> = []
     var preview: PreviewImage?
@@ -181,7 +182,9 @@ final class PhotoSession {
     }
     func usePreset(_ id: UUID?) {
         selectedPreset = id
-        if let preset = presets.first(where: { $0.id == id }) {
+        if id == Preset.mobileReferenceID {
+            settings = settings.applyingMobileReference(); invalidInputs = []; settingsRevision &+= 1
+        } else if let preset = presets.first(where: { $0.id == id }) {
             settings = preset.settings; invalidInputs = []; settingsRevision &+= 1
         }
     }
@@ -200,13 +203,15 @@ final class PhotoSession {
         let preset = Preset(id: UUID(), name: clean, settings: settings)
         persistPresets(presets + [preset], selected: preset.id)
     }
-    func deletePreset() { persistPresets(presets.filter { $0.id != selectedPreset }, selected: nil) }
+    func deletePreset() { guard canDeleteSelectedPreset else { return }; persistPresets(presets.filter { $0.id != selectedPreset }, selected: nil) }
     private func persistPresets(_ updated: [Preset], selected: UUID?) {
         do { try store.save(updated); presets = updated; selectedPreset = selected }
         catch { issues.append(PhotoIssue(url: store.url, message: Strings.text("presetError"), canRetry: false)); showIssues = true }
     }
     func settingsChanged() {
-        if presets.first(where: { $0.id == selectedPreset })?.settings != settings { selectedPreset = nil }
+        if selectedPreset == Preset.mobileReferenceID {
+            if !settings.isMobileReference { selectedPreset = nil }
+        } else if presets.first(where: { $0.id == selectedPreset })?.settings != settings { selectedPreset = nil }
         result = nil
     }
 }

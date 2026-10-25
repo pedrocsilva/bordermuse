@@ -82,6 +82,27 @@ public sealed class SessionTests : IDisposable
         Assert.True(session.CanExport);
     }
     [Fact]
+    public void MobileReferenceAppliesOnlyGeometryAndCannotBeDeleted()
+    {
+        var store = new PresetStore(Path.Combine(root, "presets.json"));
+        var session = new PhotoSession(new Processor(), store) { Settings = new BorderSettings { Quality = 73, KeepMetadata = false } };
+        session.UsePreset(Preset.MobileReferenceId);
+        Assert.True(session.Settings.IsMobileReference);
+        Assert.Equal("5:4", session.Settings.Ratio); Assert.Equal(10, session.Settings.Thickness);
+        Assert.True(session.Settings.ReduceSize); Assert.Equal(2048, session.Settings.LongEdge);
+        Assert.Equal(73, session.Settings.Quality); Assert.False(session.Settings.KeepMetadata);
+        Assert.False(session.CanDeleteSelectedPreset);
+        session.DeletePreset(); Assert.False(File.Exists(store.Path));
+        session.Settings = session.Settings with { Quality = 81 }; session.NotifySettingsChanged();
+        Assert.Equal(Preset.MobileReferenceId, session.SelectedPreset);
+        session.SavePreset("My reference copy"); Assert.True(session.CanDeleteSelectedPreset);
+        Assert.Single(store.Load());
+        session.UsePreset(Preset.MobileReferenceId);
+        session.Settings = session.Settings with { ReduceSize = false }; session.NotifySettingsChanged();
+        Assert.Null(session.SelectedPreset);
+        Assert.Single(session.Presets);
+    }
+    [Fact]
     public void PresetsUseTheSharedSchemaAndRejectInvalidSettings()
     {
         var store = new PresetStore(Path.Combine(root, "presets.json"));

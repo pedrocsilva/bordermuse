@@ -25,6 +25,12 @@ struct BorderSettings: Codable, Equatable, Sendable {
     var longEdge = 3000
     var quality = 95
     var keepMetadata = true
+    var isMobileReference: Bool { ratio == "5:4" && thickness == 10 && reduceSize && longEdge == 2048 }
+    func applyingMobileReference() -> Self {
+        var copy = self
+        copy.ratio = "5:4"; copy.thickness = 10; copy.reduceSize = true; copy.longEdge = 2048
+        return copy
+    }
     var options: ImageOptions {
         get throws {
             guard (0...50).contains(thickness) else { throw GeometryError.invalidThickness }
@@ -37,6 +43,7 @@ struct BorderSettings: Codable, Equatable, Sendable {
 }
 
 struct Preset: Identifiable, Codable, Equatable {
+    static let mobileReferenceID = UUID(uuidString: "F09C703A-989B-4B4F-9FE9-7BD46CF14001")!
     let id: UUID
     var name: String
     var settings: BorderSettings

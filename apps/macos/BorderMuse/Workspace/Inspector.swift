@@ -36,9 +36,12 @@ struct Inspector: View {
                         HStack(spacing: 5) {
                             Picker(Strings.text("preset"), selection: Binding(get: { session.selectedPreset }, set: { session.usePreset($0) })) {
                                 Text(Strings.text("custom")).tag(nil as UUID?)
+                                Text(Strings.text("mobileReferencePreset")).tag(Optional(Preset.mobileReferenceID))
                                 ForEach(session.presets) { Text($0.name).tag(Optional($0.id)) }
                             }.labelsHidden().frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("presetPicker")
-                            if session.selectedPreset != nil {
+                                .help(Strings.text("mobileReferenceHelp"))
+                                .accessibilityHint(Strings.text("mobileReferenceHelp"))
+                            if session.canDeleteSelectedPreset {
                                 Menu {
                                     Button(Strings.text("deletePreset"), role: .destructive) { session.deletePreset() }
                                 } label: { Image(systemName: "ellipsis") }

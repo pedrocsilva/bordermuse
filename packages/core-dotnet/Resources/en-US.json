@@ -47,7 +47,7 @@
   "quality": "JPEG Quality",
   "metadata": "Keep metadata",
   "metadataHelp": "Includes camera details and location when present.",
-  "sizeHelp": "Photo size before the border. Smaller photos are never enlarged.",
+  "sizeHelp": "Limits the photo before adding the border. The final canvas can be larger than this limit. Smaller photos are never enlarged.",
   "formatHelp": "Exports keep the source file format and color profile. JPEG photos are re-encoded when a border is added.",
   "applyAll": "Applies to all photos",
   "output": "Output: {0:N0} × {1:N0} px",
@@ -107,5 +107,7 @@
   "metadataRemovedSummary": "Metadata removed",
   "photoSize": "Photo size",
   "size2048": "Up to 2,048 px",
-  "sizeBeforeBorder": "Before adding the border."
+  "sizeBeforeBorder": "Before the border; final size may be larger.",
+  "mobileReferencePreset": "Mobile reference",
+  "mobileReferenceHelp": "Mobile reference uses 5:4, thickness 10 and a photo long edge up to 2,048 px before the border. Geometry was verified against 20 exports from Adobe Photoshop Lightroom 11.6.10 for iOS. Original ratio, unmeasured settings and smaller source photos have not been compared."
 }

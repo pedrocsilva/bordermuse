@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Built-in Mobile reference geometry preset: 5:4, thickness 10, photo up to 2,048 px
+  before the border, preserving quality/metadata choices. Original and Custom
+  sizes remain available; the final canvas may exceed the photo-size limit.
+- Native Apple/Windows tests run full-size synthetic inputs through reduction and
+  rendering against all 20 unchanged measured Mobile geometries and four margins.
+
 - Windows development app with portable .NET geometry/core, native WinUI workspace
   and WIC image rendering. Targets the complete macOS feature set; manual
   accessibility, interaction and independent installation gates remain open.

@@ -7,6 +7,27 @@ import BorderMuseImaging
 
 final class SessionTests: XCTestCase {
     @MainActor
+    func testMobileReferenceAppliesOnlyGeometryAndCannotBeDeleted() throws {
+        let store = PresetStore(url: try folder().appendingPathComponent("presets.json"))
+        let session = PhotoSession(store: store)
+        session.settings.quality = 73; session.settings.keepMetadata = false
+        session.setInputValidity(.thickness, valid: false)
+        session.usePreset(Preset.mobileReferenceID)
+        XCTAssertTrue(session.settings.isMobileReference)
+        XCTAssertEqual(session.settings.ratio, "5:4"); XCTAssertEqual(session.settings.thickness, 10)
+        XCTAssertTrue(session.settings.reduceSize); XCTAssertEqual(session.settings.longEdge, 2048)
+        XCTAssertEqual(session.settings.quality, 73); XCTAssertFalse(session.settings.keepMetadata)
+        XCTAssertTrue(session.invalidInputs.isEmpty); XCTAssertFalse(session.canDeleteSelectedPreset)
+        session.deletePreset(); XCTAssertFalse(FileManager.default.fileExists(atPath: store.url.path))
+        session.settings.quality = 81; session.settingsChanged()
+        XCTAssertEqual(session.selectedPreset, Preset.mobileReferenceID)
+        session.savePreset(name: "My reference copy"); XCTAssertTrue(session.canDeleteSelectedPreset)
+        XCTAssertEqual(store.load().count, 1)
+        session.usePreset(Preset.mobileReferenceID)
+        session.settings.reduceSize = false; session.settingsChanged()
+        XCTAssertNil(session.selectedPreset); XCTAssertEqual(session.presets.count, 1)
+    }
+    @MainActor
     private func idle(_ session: PhotoSession, file: StaticString = #filePath, line: UInt = #line) async throws {
         let deadline = ContinuousClock.now + .seconds(10)
         while session.isImporting || session.isExporting {

@@ -18,6 +18,7 @@ public sealed class PhotoSession(IImageProcessor processor, PresetStore store)
     {
         get; private set;
     }
+    public bool CanDeleteSelectedPreset => SelectedPreset is not null && SelectedPreset != Preset.MobileReferenceId;
     public Photo? Selected => Photos.FirstOrDefault(p => p.Id == SelectedId) ?? Photos.FirstOrDefault();
     public bool IsImporting
     {
@@ -51,7 +52,7 @@ public sealed class PhotoSession(IImageProcessor processor, PresetStore store)
     public bool CanExport => Photos.Count > 0 && !IsImporting && !IsExporting && InputsValid && Layout is not null;
     public void NotifySettingsChanged()
     {
-        SelectedPreset = null;
+        if (SelectedPreset != Preset.MobileReferenceId || !Settings.IsMobileReference) SelectedPreset = null;
         Result = null;
         Changed?.Invoke();
     }
@@ -209,6 +210,11 @@ public sealed class PhotoSession(IImageProcessor processor, PresetStore store)
     }
     public void UsePreset(Guid? id)
     {
+        if (id == Preset.MobileReferenceId)
+        {
+            Settings = Settings.ApplyingMobileReference(); InputsValid = true; Result = null;
+            SelectedPreset = id; Changed?.Invoke(); return;
+        }
         var preset = Presets.FirstOrDefault(p => p.Id == id);
         if (preset is not null)
         {
@@ -237,6 +243,7 @@ public sealed class PhotoSession(IImageProcessor processor, PresetStore store)
     }
     public void DeletePreset()
     {
+        if (!CanDeleteSelectedPreset) return;
         var updated = Presets.Where(p => p.Id != SelectedPreset).ToArray();
         store.Save(updated);
         Presets = updated;
