@@ -141,7 +141,7 @@ public sealed partial class MainWindow
         if (session.Photos.Count != 2 || !session.Photos.Any(p => p.Path == activated))
             throw new InvalidOperationException("An ordinary second launch did not import its photo into the existing window.");
         await CheckExportRecoveryAndCancellation(directory);
-        File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(new
+        void WriteReport() => File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(new
         {
             passed = true,
             photos = session.Photos.Count,
@@ -155,10 +155,10 @@ public sealed partial class MainWindow
             partialFailureRetryValidated = true,
             liveCancellationValidated = true,
             bundledRuntimesValidated = true,
-            contrastThemeSwitchValidated = contrastValidated
+            contrastThemeSwitchValidated = contrastValidated,
+            quitDuringExportValidated = true
         }));
-        allowClose = true;
-        Close();
+        await CheckQuitDuringExport(directory, WriteReport);
     }
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
     private struct ContrastSettings { public uint Size, Flags; public IntPtr Scheme; }
@@ -254,6 +254,55 @@ public sealed partial class MainWindow
                 throw new InvalidOperationException("Cancellation left temporary files or removed completed outputs.");
         }
         finally { session.Changed -= Observe; }
+    }
+    private async Task CheckQuitDuringExport(string directory, Action verified)
+    {
+        string folder = Path.Combine(directory, "quit-outputs"); Directory.CreateDirectory(folder);
+        var active = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        void Observe() { if (session.IsExporting && session.Progress.Completed >= 3) active.TrySetResult(); }
+        session.Changed += Observe;
+        var exportTask = session.ExportAsync(folder);
+        try { await active.Task.WaitAsync(TimeSpan.FromSeconds(30)); }
+        finally { session.Changed -= Observe; }
+        bool closed = false;
+        Closed += (_, _) => closed = true;
+        Close();
+        await InvokeQuitChoice("keepWorking");
+        await WaitFor(() => !showingQuit, "Keep Working dismissing the quit dialog");
+        if (closed || allowClose || !session.IsExporting || exportTask.IsCompleted)
+            throw new InvalidOperationException("Keep Working closed the window or interrupted the active batch.");
+        await Capture(Path.Combine(directory, "quit-kept-working.png"));
+        Close();
+        await WaitFor(() => QuitButton("stopQuit") is not null, "Stop and Quit button");
+        Closed += (_, _) =>
+        {
+            try
+            {
+                if (!allowClose || session.IsExporting || !exportTask.IsCompleted || session.Result is not { Canceled: true } || session.Result.Outputs.Count < 2 || session.Result.Outputs.Count >= session.Photos.Count)
+                    throw new InvalidOperationException("Stop and Quit closed before canceling and awaiting the active export.");
+                if (Directory.GetFiles(folder, ".bordermuse-*").Length != 0 || session.Result.Outputs.Any(p => !File.Exists(p)))
+                    throw new InvalidOperationException("Stop and Quit left temporary files or removed completed outputs.");
+                verified();
+            }
+            catch (Exception error) { App.RecordSmokeFailure(error.ToString()); Environment.Exit(1); }
+        };
+        await InvokeQuitChoice("stopQuit");
+        await WaitFor(() => closed, "Stop and Quit closing the native window");
+    }
+    private static Microsoft.UI.Xaml.Controls.Button? DescendantButton(DependencyObject element, string text)
+    {
+        if (element is Microsoft.UI.Xaml.Controls.Button button && button.IsLoaded && button.IsEnabled && button.Content as string == text) return button;
+        for (int i = 0; i < Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(element); i++)
+            if (DescendantButton(Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, i), text) is { } found) return found;
+        return null;
+    }
+    private Microsoft.UI.Xaml.Controls.Button? QuitButton(string key) => Microsoft.UI.Xaml.Media.VisualTreeHelper.GetOpenPopupsForXamlRoot(root.XamlRoot)
+        .Select(p => DescendantButton(p.Child, BorderMuse.Core.Strings.Text(key))).FirstOrDefault(b => b is not null);
+    private async Task InvokeQuitChoice(string key)
+    {
+        await WaitFor(() => QuitButton(key) is not null, "quit dialog choice " + key);
+        var peer = new Microsoft.UI.Xaml.Automation.Peers.ButtonAutomationPeer(QuitButton(key)!);
+        ((Microsoft.UI.Xaml.Automation.Provider.IInvokeProvider)peer.GetPattern(Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Invoke)).Invoke();
     }
     private static async Task WaitFor(Func<bool> ready, string description)
     {
