@@ -87,6 +87,7 @@ final class PresentationTests: XCTestCase {
             ("dark-portrait", 801, 1201, true, 1120, 760, false),
             ("light-square-minimum", 900, 900, false, 900, 620, false),
             ("dark-minimum-options", 801, 1201, true, 900, 620, true),
+            ("light-mobile-reference", 801, 1201, false, 900, 620, true),
             ("light-empty", 1000, 800, false, 900, 620, false),
             ("dark-exporting", 1000, 800, true, 900, 620, false),
             ("light-long-name-batch", 1000, 800, false, 900, 620, false),
@@ -95,6 +96,7 @@ final class PresentationTests: XCTestCase {
         ] {
             let model = try await session(width: w, height: h)
             model.settings.ratio = "1:1"; model.settings.reduceSize = options
+            if name == "light-mobile-reference" { model.usePreset(Preset.mobileReferenceID) }
             if name == "light-empty" { model.clear() }
             if name == "dark-exporting" || name == "light-long-name-batch" {
                 let original = model.photos[0]
@@ -130,6 +132,10 @@ final class PresentationTests: XCTestCase {
             let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
             try png.write(to: output.appendingPathComponent(name + ".png"))
             XCTAssertGreaterThan(png.count, 5000, "Snapshot must contain rendered UI")
+            if name == "light-mobile-reference" {
+                XCTAssertEqual(model.selectedPreset, Preset.mobileReferenceID)
+                XCTAssertTrue(model.settings.isMobileReference)
+            }
             window.close()
             model.clear()
         }

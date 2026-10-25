@@ -107,7 +107,7 @@
   "metadataRemovedSummary": "Metadata removed",
   "photoSize": "Photo size",
   "size2048": "Up to 2,048 px",
-  "sizeBeforeBorder": "Before the border; final size may be larger.",
+  "sizeBeforeBorder": "Final size may exceed this limit.",
   "mobileReferencePreset": "Mobile reference",
   "mobileReferenceHelp": "Mobile reference uses 5:4, thickness 10 and a photo long edge up to 2,048 px before the border. Geometry was verified against 20 exports from Adobe Photoshop Lightroom 11.6.10 for iOS. Original ratio, unmeasured settings and smaller source photos have not been compared."
 }

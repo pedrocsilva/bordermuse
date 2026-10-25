@@ -13,7 +13,7 @@ let package = Package(
             name: "BorderMuseGeometryTests",
             dependencies: ["BorderMuseGeometry"],
             path: "geometry",
-            exclude: ["README.md", "reference.py", "test_reference.py"],
+            exclude: ["README.md", "reference.py", "test_reference.py", "mobile-export-v1.json"],
             sources: ["swift"],
             resources: [.copy("conformance-v1.json")]
         ),
