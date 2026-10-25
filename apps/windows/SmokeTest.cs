@@ -255,6 +255,9 @@ public sealed partial class MainWindow
         }
         finally { session.Changed -= Observe; }
     }
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "PostMessageW", SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
     private async Task CheckQuitDuringExport(string directory, Action verified)
     {
         string folder = Path.Combine(directory, "quit-outputs"); Directory.CreateDirectory(folder);
@@ -266,13 +269,14 @@ public sealed partial class MainWindow
         finally { session.Changed -= Observe; }
         bool closed = false;
         Closed += (_, _) => closed = true;
-        Close();
+        if (!PostMessage(WinRT.Interop.WindowNative.GetWindowHandle(this), 0x10, IntPtr.Zero, IntPtr.Zero))
+            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
         await InvokeQuitChoice("keepWorking");
         await WaitFor(() => !showingQuit, "Keep Working dismissing the quit dialog");
         if (closed || allowClose || !session.IsExporting || exportTask.IsCompleted)
             throw new InvalidOperationException("Keep Working closed the window or interrupted the active batch.");
         await Capture(Path.Combine(directory, "quit-kept-working.png"));
-        Close();
+        var menuQuit = RequestCloseAsync();
         await WaitFor(() => QuitButton("stopQuit") is not null, "Stop and Quit button");
         Closed += (_, _) =>
         {
@@ -288,6 +292,7 @@ public sealed partial class MainWindow
         };
         await InvokeQuitChoice("stopQuit");
         await WaitFor(() => closed, "Stop and Quit closing the native window");
+        await menuQuit;
     }
     private static Microsoft.UI.Xaml.Controls.Button? DescendantButton(DependencyObject element, string text)
     {

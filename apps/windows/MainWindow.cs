@@ -261,7 +261,7 @@ public sealed partial class MainWindow : Window
         file.Items.Add(Add("exportMenu", () => ChooseExport()));
         file.Items.Add(Add("clear", () => { session.Clear(); return Task.CompletedTask; }));
         file.Items.Add(new MenuFlyoutSeparator());
-        file.Items.Add(Add("quit", () => { Close(); return Task.CompletedTask; }));
+        file.Items.Add(Add("quit", RequestCloseAsync));
         var help = new MenuBarItem() { Title = Strings.Text("helpMenu") };
         var about = Add("about", async () => await Dialog(Strings.Text("appName"), Text(Strings.Text("aboutVersion"), 14), "done"));
         help.Items.Add(about);
@@ -644,22 +644,30 @@ public sealed partial class MainWindow : Window
             await ChooseExport(true);
     }
     private async Task Dialog(string title, UIElement content, string close) => await new ContentDialog() { XamlRoot = root.XamlRoot, Title = title, Content = content, CloseButtonText = Strings.Text(close) }.ShowAsync();
-    private async void Closing(AppWindow sender, AppWindowClosingEventArgs args)
+    private void Closing(AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (allowClose || !session.IsExporting)
+        if (allowClose || (!session.IsExporting && !showingQuit))
             return;
         args.Cancel = true;
-        if (showingQuit)
-            return;
+        // Return from the native close event before presenting async XAML UI.
+        DispatcherQueue.TryEnqueue(async () => await RequestCloseAsync());
+    }
+    private async Task RequestCloseAsync()
+    {
+        if (showingQuit) return;
+        if (!session.IsExporting) { Close(); return; }
         showingQuit = true;
-        var dialog = new ContentDialog() { XamlRoot = root.XamlRoot, Title = Strings.Text("closeTitle"), Content = Strings.Text("closeMessage"), PrimaryButtonText = Strings.Text("keepWorking"), SecondaryButtonText = Strings.Text("stopQuit"), DefaultButton = ContentDialogButton.Primary };
-        if (await dialog.ShowAsync() == ContentDialogResult.Secondary)
+        try
         {
-            await session.CancelExportAndWaitAsync();
-            allowClose = true;
-            Close();
+            var dialog = new ContentDialog() { XamlRoot = root.XamlRoot, Title = Strings.Text("closeTitle"), Content = Strings.Text("closeMessage"), PrimaryButtonText = Strings.Text("keepWorking"), SecondaryButtonText = Strings.Text("stopQuit"), DefaultButton = ContentDialogButton.Primary };
+            if (await dialog.ShowAsync() == ContentDialogResult.Secondary)
+            {
+                await session.CancelExportAndWaitAsync();
+                allowClose = true;
+                Close();
+            }
         }
-        showingQuit = false;
+        finally { showingQuit = false; }
     }
     private sealed record SizeChoice(int LongEdge, string Name);
     private sealed record RatioChoice(string Value, string Name);
