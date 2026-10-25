@@ -18,8 +18,8 @@ alpha.2 feature set without requiring further macOS features first.
 4. Run the benchmark with varied resolutions and batch sizes. Record time,
    peak memory, hardware and responsiveness; fix observed problems and rerun.
 5. Test a downloaded universal build on independent Apple silicon and Intel Macs.
-   Complete Developer ID signing, notarization and stapling before a beta intended
-   for ordinary installation.
+   Keep the current ad hoc signing status visible in download instructions.
+   Paid Developer ID signing, notarization and stapling are deferred.
 
 **Done:** blocking issues are resolved; dated results identify source revision,
 macOS/hardware, tested flows and remaining limitations. Real photo checks,
@@ -61,10 +61,15 @@ installable artifact; a successful compile alone does not establish parity.
 
 ## Current baseline and gates
 
-Source includes the macOS workflow, Apple renderer, developer CLI, Python
-reference, Swift geometry and automated checks. Portable package extraction and
-an independent Swift example are present; their new CI results must be checked.
-Live app QA and a partner-editor integration remain outstanding.
+macOS and Windows have native workspaces and separate rendering adapters over
+portable geometry. Shared conformance, format/depth/color/metadata tests,
+public-photo comparisons and native Windows cancellation/retry and contrast-mode
+checks have passed. Dated Windows evidence is in [the parity checklist](WINDOWS_PARITY.md).
+
+Remaining desktop release gates are hands-on accessibility, full keyboard and
+file-panel/drag-drop interactions, display scaling, visual photo review and
+independent downloaded-app installation. A partner-editor integration also needs
+a selected host; it is separate from shipping the desktop apps.
 
 Before claiming readiness: check CI for the exact revision, perform the manual
 checks above and compare packaged artifacts with their manifest. Existing release

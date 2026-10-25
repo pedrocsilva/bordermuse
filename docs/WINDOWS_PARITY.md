@@ -36,8 +36,8 @@ uploads a development app. Manual gates above remain open until evidence exists.
 
 ## Automated evidence
 
-[Windows run 40129466150](https://github.com/pedrocsilva/bordermuse/actions/runs/40129466150)
-passed on revision `064149f` on October 24, 2026:
+[Windows run 40172130371](https://github.com/pedrocsilva/bordermuse/actions/runs/40172130371)
+passed on revision `4dcca1e` on October 25, 2026:
 
 - Eight portable tests, including all 20 measured geometry cases, session/preset
   behavior and bounded PNG EXIF parsing, CRCs and metadata chunk rewriting.
@@ -49,15 +49,22 @@ passed on revision `064149f` on October 24, 2026:
   plus normalized orientation/dimension tags.
 - The published workspace exercised import/deduplication, preset restoration,
   Original/2048/Custom sizing, invalid drafts, secondary-instance activation,
-  partial failure/retry and cancellation during a large batch. Completed exports
-  survived cancellation, temporary files were removed, and originals/existing
-  outputs remained intact. Light/dark/minimum-size captures accompany the run.
+  partial failure/retry and cancellation during a large batch. Both system close
+  and menu quit reached the shared confirmation path: Keep Working preserved the
+  batch; Stop and Quit canceled and awaited cleanup before the window closed.
+  Completed exports survived cancellation, temporary files were removed, and
+  originals/existing outputs remained intact. Light/dark/minimum-size captures
+  accompany the run.
+- A live system contrast-theme switch updated the workspace, stage and validation
+  brushes to the system window/text colors, preserved the photo's white border,
+  and restored the previous setting. Customized palettes and broader DPI review
+  still require hands-on checks.
 - With external .NET lookup disabled, the app loaded its bundled .NET and WinUI
   modules. Package metadata identifies its source revision and bundled runtimes;
   per-file checksums were verified after the native launch.
 
 [Public photo run 40129466203](https://github.com/pedrocsilva/bordermuse/actions/runs/40129466203)
-also passed at `064149f`. Three hash-pinned public JPEGs were exported by both
+passed at renderer revision `064149f`. Three hash-pinned public JPEGs were exported by both
 renderers at original and 2048-pixel photo sizes, with metadata kept and removed.
 Dimensions, orientation, ICC/selected camera metadata, white borders and original
 hashes passed. Full-size mean RGB differences were 0.86–1.47 levels out of 255;
@@ -68,3 +75,28 @@ display accuracy or broad camera/editor coverage.
 These results cover the named revision. Narrator, complete keyboard traversal,
 actual file panels and cross-window drag/drop, customized contrast themes/DPI,
 installed Explorer integration and independent installation remain release gates.
+
+## Hands-on acceptance
+
+Use a downloaded development artifact, not a source-tree executable. Record its
+`BorderMuse-build.json` source commit, Windows version, display scale and result.
+
+1. On a PC without a .NET SDK, extract the complete folder and launch the app.
+   Import JPEG, PNG and single-image TIFF through Add Photos and Explorer
+   drag/drop. Check multiple selection, duplicates and non-ASCII filenames.
+2. Complete import, photo navigation, preset save/restore and export using only
+   the keyboard. With Narrator enabled, check control names/values, selected-photo
+   announcements, validation and export progress. Confirm focus returns after
+   dialogs and errors.
+3. At 100%, 150% and 200% display scaling, review the minimum window with Export
+   Options expanded and an invalid value. Check scrolling, focus visibility and
+   readable errors. Try the built-in contrast themes and a customized palette.
+4. Export a varied photo batch at Original, 2048 and Custom sizes, keeping and
+   removing metadata. Compare color and detail in the source editor and an image
+   viewer; verify originals and existing outputs stay intact. Check denied folder
+   access, retry and both quit-dialog choices during export.
+5. Test Open With/command-line file opening and reveal of multiple exports in
+   Explorer from the downloaded app. Repeat launch/export on an independent PC.
+
+CI covers only its named automated subset. A passing native smoke report does
+not mark these complete keyboard, assistive-technology or installation checks done.

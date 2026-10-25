@@ -37,5 +37,6 @@ architectures, signing status and geometry contract. Packaging includes the MIT
 license and checks signature, sandbox entitlements, macOS minimum and US English
 resources. Toolchains can change binary bytes; byte reproducibility is not promised.
 
-Developer ID signing, notarization, stapling and independent downloaded-app checks
-are required before ordinary production distribution. See [installation](INSTALL.md).
+Developer ID signing, notarization and stapling are deferred. Experimental builds
+retain ad hoc signing and document the installation prompts. Independent
+downloaded-app checks remain a release gate. See [installation](INSTALL.md).
